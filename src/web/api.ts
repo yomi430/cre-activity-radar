@@ -6,12 +6,20 @@ async function get<T>(url: string, signal?: AbortSignal): Promise<ApiResponse<T>
   if (!response.ok) { let message = `Request failed (${response.status})`; try { message = (await response.json()).error?.message ?? message; } catch {} throw new Error(message); }
   return response.json() as Promise<ApiResponse<T>>;
 }
+async function post<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
+  const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  if (!response.ok) { let message = `Request failed (${response.status})`; try { message = (await response.json()).error?.message ?? message; } catch {} throw new Error(message); }
+  return response.json() as Promise<ApiResponse<T>>;
+}
 export const api = {
   summary: (market: Market, permitType: string, signal?: AbortSignal) => get<SummaryData>(`/api/summary?${qs({ market, permitType })}`, signal),
   cells: (market: Market, permitType: string, signal?: AbortSignal) => get<CellsData>(`/api/cells?${qs({ market, permitType })}`, signal),
   cell: (market: Market, cell: string, permitType: string, signal?: AbortSignal) => get<CellSignal>(`/api/cells/${encodeURIComponent(cell)}?${qs({ market, permitType })}`, signal),
+  brief: (market: Market, cell: string, permitType: string, signal?: AbortSignal) => get<unknown>(`/api/cells/${encodeURIComponent(cell)}/brief?${qs({ market, permitType })}`, signal),
   evidence: (market: Market, cell: string, permitType: string, period: 'current' | 'prior', offset: number, signal?: AbortSignal) => get<PermitEvidence[]>(`/api/cells/${encodeURIComponent(cell)}/evidence?${qs({ market, permitType, period, offset, limit: 25 })}`, signal),
   approvals: (market: Market, signal?: AbortSignal) => get<ApprovalEvidence[]>(`/api/approvals?${qs({ market, period: 'current', offset: 0, limit: 25 })}`, signal),
   record: (id: string, signal?: AbortSignal) => get<RecordDetail>(`/api/records/${encodeURIComponent(id)}`, signal),
   sources: (market: Market, signal?: AbortSignal) => get<SourceReport[]>(`/api/sources?${qs({ market })}`, signal)
+  ,pipeline: (signal?: AbortSignal) => get<unknown>('/api/admin/pipeline', signal)
+  ,runJob: (action: 'REFRESH_CHICAGO' | 'REFRESH_NYC' | 'REFRESH_SBA' | 'REBUILD_DATABASE' | 'VERIFY_DATASET') => post<unknown>('/api/admin/jobs', { action })
 };

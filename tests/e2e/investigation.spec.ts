@@ -1,18 +1,21 @@
 import { expect, test } from '@playwright/test';
 
 async function chooseFirstArea(page: import('@playwright/test').Page) {
-  const area = page.locator('.area').first();
+  const area = page.locator('.finding').first();
   await expect(area).toBeVisible();
   await area.click();
   await expect(page.getByText('Permit evidence')).toBeVisible();
 }
 
 test('investigates a Chicago area, opens source evidence, and repeats in NYC', async ({ page }) => {
+  await page.route(/tile\.openstreetmap\.org|arcgisonline\.com/, route => route.abort());
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CRE Activity Radar' })).toBeVisible();
   await expect(page.getByText('Source quality')).toBeVisible();
 
+  await expect(page.getByRole('heading', { name: 'Areas worth investigating' })).toBeVisible();
   await chooseFirstArea(page);
+  await expect(page.getByRole('heading', { name: 'Why it surfaced' })).toBeVisible();
   await page.getByRole('button', { name: 'Prior' }).click();
   await expect(page.getByText('Jul 2024–Jun 2025', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Current' }).click();
@@ -33,10 +36,11 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
 
 test('keeps the investigation workflow usable at a mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.route(/tile\.openstreetmap\.org|arcgisonline\.com/, route => route.abort());
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CRE Activity Radar' })).toBeVisible();
-  await expect(page.locator('.area').first()).toBeVisible();
-  await page.locator('.area').first().click();
+  await expect(page.locator('.finding').first()).toBeVisible();
+  await page.locator('.finding').first().click();
   await expect(page.getByText('Permit evidence')).toBeVisible();
   await page.screenshot({ path: 'test-results/chicago-mobile.png', fullPage: true });
 });
