@@ -1,7 +1,8 @@
 import type { DatabaseSync } from 'node:sqlite';
-import type { ApprovalEvidence, CellSignal, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData } from '../shared/contracts.js';
+import type { ApprovalEvidence, CellSignal, InvestigationBrief, InvestigationDriver, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData } from '../shared/contracts.js';
 import { change } from '../domain/change.js';
 import { months, WINDOWS } from '../domain/dates.js';
+import { persistenceForCurrent, sortDrivers, surfacedNarrative } from '../domain/investigation.js';
 import { polygonFor } from '../domain/spatial.js';
 
 type PermitRow = { id: string; market: Market; source: 'CHICAGO_PERMIT' | 'NYC_DOB_NOW'; event_date: string; permit_number: string | null; permit_type: string; reported_cost_cents: number | null; address: string | null; description: string | null; h3_cell: string | null; lat: number | null; lng: number | null; warnings_json: string; raw_json: string };
@@ -34,6 +35,85 @@ export function signalFor(db: DatabaseSync, market: Market, cell: string, permit
   const values = new Map(monthlyRows.map(x => [x.month, x.count])); const permitCount = change(row.current ?? 0, row.prior ?? 0, comparable(db, market));
   const address = (db.prepare(`SELECT MIN(address) AS address FROM permits WHERE market = ? AND h3_cell = ?${filter.clause}`).get(market, cell, ...filter.params) as { address: string | null }).address;
   return { market, h3Cell: cell, label: address ? `Near ${address}` : `${market === 'NYC' ? 'NYC' : 'Chicago'} H3 ${cell.slice(-5)}`, permitCount, monthly: months().map(month => ({ month, count: values.get(month) ?? 0 })), lowVolume: permitCount.current + permitCount.previous < 5 };
+}
+
+function sourceSemantics(market: Market): string {
+  return market === 'CHICAGO'
+    ? 'Chicago Building Permits records are recorded permit issuances. They are not unique development projects or construction starts.'
+    : 'NYC DOB NOW: Build records are approved permit issuances. The source does not represent all NYC permit systems, and records are not unique development projects.';
+}
+
+/**
+ * Builds an auditable research queue item from source records for one H3 cell.
+ * The output intentionally contains no modeled score, causal claim, or prediction.
+ */
+export function investigationBriefFor(db: DatabaseSync, market: Market, cell: string, permitType: string): InvestigationBrief | null {
+  const signal = signalFor(db, market, cell, permitType);
+  if (!signal) return null;
+  const filter = typeWhere(permitType);
+  const base = `market = ? AND h3_cell = ?${filter.clause}`;
+  const baseParams = [market, cell, ...filter.params];
+  const counts = signal.permitCount;
+  const totalCurrent = counts.current;
+  const drivers = sortDrivers((db.prepare(`SELECT permit_type AS permitType,
+      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior,
+      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current
+      FROM permits WHERE ${base} GROUP BY permit_type HAVING prior > 0 OR current > 0`)
+    .all(dates[0], dates[1], dates[2], dates[3], ...baseParams) as Array<{ permitType: string; prior: number; current: number }>)
+    .map(row => ({ permitType: row.permitType, prior: row.prior ?? 0, current: row.current ?? 0, absolute: (row.current ?? 0) - (row.prior ?? 0), currentShare: totalCurrent > 0 ? (row.current ?? 0) / totalCurrent : null } satisfies InvestigationDriver))).slice(0, 5);
+  const persistence = persistenceForCurrent(signal.monthly);
+  const missing = db.prepare(`SELECT COUNT(*) AS n FROM permits WHERE ${base} AND event_date >= ? AND event_date < ? AND reported_cost_cents IS NULL`)
+    .get(...baseParams, WINDOWS.current.start, WINDOWS.current.endExclusive) as { n: number };
+  const addressRows = db.prepare(`SELECT address,
+      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior,
+      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current
+      FROM permits WHERE ${base} AND address IS NOT NULL AND trim(address) <> ''
+      GROUP BY address HAVING current > 0
+      ORDER BY (current - prior) DESC, current DESC, address ASC LIMIT 5`)
+    .all(dates[0], dates[1], dates[2], dates[3], ...baseParams) as Array<{ address: string; prior: number; current: number }>;
+  const repeatedAddresses = addressRows.map(row => {
+    const ids = (db.prepare(`SELECT id FROM permits WHERE ${base} AND address = ? AND event_date >= ? AND event_date < ? ORDER BY event_date DESC, id ASC LIMIT 10`)
+      .all(...baseParams, row.address, WINDOWS.current.start, WINDOWS.current.endExclusive) as Array<{ id: string }>).map(record => record.id);
+    const params = new URLSearchParams({ market, permitType, period: 'current' });
+    return { address: row.address, prior: row.prior ?? 0, current: row.current ?? 0, absolute: (row.current ?? 0) - (row.prior ?? 0), currentRecordIds: ids, evidencePath: `/api/cells/${cell}/evidence?${params.toString()}` };
+  });
+  const largestCurrentPermits = (db.prepare(`SELECT id, event_date, address, permit_type, reported_cost_cents FROM permits WHERE ${base}
+      AND event_date >= ? AND event_date < ? AND reported_cost_cents IS NOT NULL
+      ORDER BY reported_cost_cents DESC, event_date DESC, id ASC LIMIT 5`)
+    .all(...baseParams, WINDOWS.current.start, WINDOWS.current.endExclusive) as Array<{ id: string; event_date: string; address: string | null; permit_type: string; reported_cost_cents: number }>)
+    .map(row => ({ id: row.id, date: row.event_date, address: row.address, permitType: row.permit_type, reportedCostCents: row.reported_cost_cents, recordPath: `/api/records/${encodeURIComponent(row.id)}` }));
+  const facts = [
+    `${counts.current} current-window record${counts.current === 1 ? '' : 's'} versus ${counts.previous} prior-window record${counts.previous === 1 ? '' : 's'} (${counts.absolute >= 0 ? '+' : ''}${counts.absolute}).`,
+    persistence.peakMonth ? `${persistence.activeMonthsCurrent} active current-window month${persistence.activeMonthsCurrent === 1 ? '' : 's'}; peak ${persistence.peakMonth} with ${persistence.peakMonthCount} record${persistence.peakMonthCount === 1 ? '' : 's'}.` : 'No current-window records were observed.',
+    `${missing.n ?? 0} of ${counts.current} current-window record${counts.current === 1 ? '' : 's'} ${missing.n === 1 ? 'is' : 'are'} missing a reported cost.`,
+  ];
+  const canSuggest = [
+    counts.absolute > 0 ? 'The selected area has more recorded permit activity in the current fixed window than in the prior window.' : counts.absolute < 0 ? 'The selected area has fewer recorded permit activity records in the current fixed window than in the prior window.' : 'The selected area has the same number of recorded permit activity records in both fixed windows.',
+    persistence.activeMonthsCurrent > 1 ? `Recorded activity appeared in ${persistence.activeMonthsCurrent} current-window months.` : 'The timing shown is limited to the recorded permit dates in this source.',
+  ];
+  const cannotConclude = [
+    'This evidence does not establish new supply, tenant demand, rent growth, property value, or investment performance.',
+    'Permit issuance records are not unique projects, construction starts, completed work, or a commercial-only activity measure.',
+    'Reported costs are applicant-reported estimates; they should not be summed as construction investment.',
+  ];
+  const recommendedNextChecks = [
+    'Open the listed source records and verify permit descriptions, dates, and addresses before treating the change as an investigation lead.',
+    ...(repeatedAddresses.length > 0 ? [`Check whether records at ${repeatedAddresses[0]!.address} describe one site, repeated filings, or separate work.`] : []),
+    ...(largestCurrentPermits.length > 0 ? ['Review the largest reported-cost records individually; reported costs are incomplete and are not investment totals.'] : []),
+    ...(missing.n > 0 ? ['Account for records without a reported cost before using cost fields in further research.'] : []),
+    ...(counts.basis === 'NO_BASELINE' ? ['Check prior-period source coverage and record semantics before interpreting a zero prior count as a new trend.'] : []),
+  ];
+  return {
+    market, h3Cell: cell, permitType, label: signal.label, windows: WINDOWS, permitCount: counts,
+    whySurfaced: { narrative: surfacedNarrative(counts, permitType), facts }, drivers,
+    activityPersistence: persistence, repeatedAddresses, largestCurrentPermits,
+    dataQuality: {
+      mappedEvidence: { current: counts.current, prior: counts.previous, note: 'All evidence in this brief has a source coordinate assigned to this H3 visualization cell.' },
+      missingReportedCost: { current: missing.n ?? 0, currentShare: totalCurrent > 0 ? (missing.n ?? 0) / totalCurrent : null, caveat: 'Missing reported cost is not zero. Reported costs remain record-level evidence and are not a project or investment total.' },
+      sourceSemantics: sourceSemantics(market),
+    },
+    canSuggest, cannotConclude, recommendedNextChecks,
+  };
 }
 export function evidenceFor(db: DatabaseSync, market: Market, cell: string, type: string, period: 'prior' | 'current', limit: number, offset: number) {
   const filter = typeWhere(type); const w = WINDOWS[period]; const where = `market = ? AND h3_cell = ? AND event_date >= ? AND event_date < ?${filter.clause}`;

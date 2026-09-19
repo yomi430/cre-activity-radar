@@ -120,3 +120,100 @@ export interface RecordDetail {
   sourceUrl: string;
   warnings: string[];
 }
+
+/**
+ * An evidence-first explanation for one selected map cell.  None of these fields
+ * are predictions or a composite "opportunity" score: every number is calculated
+ * from permit records in the fixed comparison windows.
+ */
+export interface InvestigationDriver {
+  permitType: string;
+  current: number;
+  prior: number;
+  absolute: number;
+  currentShare: number | null;
+}
+export interface ActivityPersistence {
+  activeMonthsCurrent: number;
+  longestCurrentMonthStreak: number;
+  peakMonth: string | null;
+  peakMonthCount: number;
+  topMonthConcentrationShare: number | null;
+}
+export interface RepeatedAddressSignal {
+  address: string;
+  current: number;
+  prior: number;
+  absolute: number;
+  currentRecordIds: string[];
+  evidencePath: string;
+}
+export interface LargestPermitSignal {
+  id: string;
+  date: string;
+  address: string | null;
+  permitType: string;
+  reportedCostCents: number;
+  recordPath: string;
+}
+export interface InvestigationDataQuality {
+  mappedEvidence: { current: number; prior: number; note: string };
+  missingReportedCost: { current: number; currentShare: number | null; caveat: string };
+  sourceSemantics: string;
+}
+export interface InvestigationBrief {
+  market: Market;
+  h3Cell: string;
+  permitType: string;
+  label: string;
+  windows: Windows;
+  permitCount: Change;
+  whySurfaced: { narrative: string; facts: string[] };
+  drivers: InvestigationDriver[];
+  activityPersistence: ActivityPersistence;
+  repeatedAddresses: RepeatedAddressSignal[];
+  largestCurrentPermits: LargestPermitSignal[];
+  dataQuality: InvestigationDataQuality;
+  canSuggest: string[];
+  cannotConclude: string[];
+  recommendedNextChecks: string[];
+}
+
+export const adminJobActions = ['REFRESH_CHICAGO', 'REFRESH_NYC', 'REFRESH_SBA', 'REBUILD_DATABASE', 'VERIFY_DATASET'] as const;
+export type AdminJobAction = (typeof adminJobActions)[number];
+export const adminJobActionSchema = z.enum(adminJobActions);
+export interface AdminJob {
+  id: string;
+  action: AdminJobAction;
+  status: 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'INTERRUPTED';
+  startedAt: string;
+  finishedAt: string | null;
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+  outputTruncated: boolean;
+  note: string | null;
+}
+export interface PipelineSourceStatus {
+  source: Source;
+  market: Market;
+  status: SourceReport['status'];
+  completeness: SourceReport['completeness'];
+  retrievedAt: string | null;
+  publisherAsOf: string | null;
+  coverageStart: string | null;
+  coverageEndExclusive: string | null;
+  acceptedRows: number;
+  resolvedRows: number;
+  unresolvedRows: number;
+  missingCostRows: number;
+  checksum: string | null;
+}
+export interface PipelineStatus {
+  datasetId: string | null;
+  manifest: { mode: string; coverageStart: string | null; coverageEndExclusive: string | null; importedAt: string | null } | null;
+  sources: PipelineSourceStatus[];
+  currentJob: AdminJob | null;
+  lastJob: AdminJob | null;
+  serverRestartLimitation: string;
+}
