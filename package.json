@@ -18,7 +18,7 @@
     "data:fetch:chicago": "node scripts/fetch-permits.mjs chicago",
     "data:fetch:nyc": "node scripts/fetch-permits.mjs nyc",
     "data:fetch:sba": "node scripts/fetch-sba.mjs",
-    "test": "vitest run",
+    "test": "vitest run --exclude tests/e2e/**",
     "test:e2e": "playwright test",
     "demo": "npm run data:seed && npm run build && npm run start"
   },

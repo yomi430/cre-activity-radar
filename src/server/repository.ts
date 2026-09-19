@@ -21,12 +21,10 @@ export function summaryFor(db: DatabaseSync, market: Market, permitType: string)
 }
 export function cellsFor(db: DatabaseSync, market: Market, permitType: string) {
   const filter = typeWhere(permitType); const rows = db.prepare(`SELECT h3_cell, MIN(address) AS address, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current FROM permits WHERE market = ? AND h3_cell IS NOT NULL${filter.clause} GROUP BY h3_cell HAVING prior > 0 OR current > 0 ORDER BY current DESC, h3_cell`).all(dates[0], dates[1], dates[2], dates[3], market, ...filter.params) as Array<{ h3_cell: string; address: string | null; prior: number; current: number }>;
-  // This endpoint drives both map and area list. Keep it to two grouped queries, rather than per-cell detail queries.
-  const monthlyRows = db.prepare(`SELECT h3_cell, substr(event_date, 1, 7) AS month, COUNT(*) AS count FROM permits WHERE market = ? AND h3_cell IS NOT NULL${filter.clause} GROUP BY h3_cell, month`).all(market, ...filter.params) as Array<{ h3_cell: string; month: string; count: number }>;
-  const perCellMonth = new Map<string, Map<string, number>>();
-  for (const row of monthlyRows) { let byMonth = perCellMonth.get(row.h3_cell); if (!byMonth) { byMonth = new Map(); perCellMonth.set(row.h3_cell, byMonth); } byMonth.set(row.month, row.count); }
+  // The collection drives the map/list and does not need 24 monthly values per cell.
+  // Monthly data is calculated only for the selected-cell detail endpoint.
   const isComparable = comparable(db, market);
-  const cells = rows.map(row => { const permitCount = change(row.current ?? 0, row.prior ?? 0, isComparable); const byMonth = perCellMonth.get(row.h3_cell) ?? new Map<string, number>(); return { market, h3Cell: row.h3_cell, label: row.address ? `Near ${row.address}` : `${market === 'NYC' ? 'NYC' : 'Chicago'} H3 ${row.h3_cell.slice(-5)}`, permitCount, monthly: months().map(month => ({ month, count: byMonth.get(month) ?? 0 })), lowVolume: permitCount.current + permitCount.previous < 5 } satisfies CellSignal; });
+  const cells = rows.map(row => { const permitCount = change(row.current ?? 0, row.prior ?? 0, isComparable); return { market, h3Cell: row.h3_cell, label: row.address ? `Near ${row.address}` : `${market === 'NYC' ? 'NYC' : 'Chicago'} H3 ${row.h3_cell.slice(-5)}`, permitCount, monthly: [], lowVolume: permitCount.current + permitCount.previous < 5 } satisfies CellSignal; });
   return { cells, geojson: { type: 'FeatureCollection' as const, features: cells.map(cell => ({ type: 'Feature' as const, properties: { h3Cell: cell.h3Cell, current: cell.permitCount.current, label: cell.label }, geometry: { type: 'Polygon' as const, coordinates: polygonFor(cell.h3Cell) } })) } };
 }
 export function signalFor(db: DatabaseSync, market: Market, cell: string, permitType: string): CellSignal | null {
