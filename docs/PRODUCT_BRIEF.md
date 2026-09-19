@@ -1,5 +1,12 @@
 # Product brief: an auditable weekly investigation queue
 
+> **Market-validation update (2026-09-19):** Permit aggregation and careful municipal
+> normalization already exist in products such as PropertyLabs. The defensible claim is
+> an interactive, auditable CRE analyst workflow, not novelty of the data or method.
+> Permits are later than entitlement signals; NYC ZAP-BBL is the strongest identified
+> future source. SBA remains unvalidated supplementary context. Source-specific lens
+> mappings must be inspectable and must match the actual extracted schemas.
+
 ## The decision
 
 The primary persona is a CRE market research analyst supporting brokers' weekly market review. Their job is to turn a broad market question into a small, defensible research queue before broker and proprietary-data time is spent.
