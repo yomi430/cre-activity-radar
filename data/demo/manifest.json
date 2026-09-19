@@ -1,0 +1,9 @@
+{
+  "id": "synthetic-two-market-bootstrap-v1",
+  "mode": "synthetic",
+  "fixtureSeed": "cre-radar-t01",
+  "coverageStart": "2024-07-01",
+  "coverageEndExclusive": "2026-07-01",
+  "markets": ["CHICAGO", "NYC"],
+  "notes": ["Deterministic synthetic source-shaped fixtures for Chicago and NYC. They are not public-source evidence."]
+}

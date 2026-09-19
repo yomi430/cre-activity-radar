@@ -1,0 +1,2 @@
+{"id":"demo-nyc-p-001","permit_number":"NYC-100001","permit_type":"NB","status":"APPROVED","issue_date":"2024-09-01","reported_cost":"500000.00","latitude":"40.7128","longitude":"-74.0060","address":"100 DEMO AVE, NEW YORK, NY","description":"Synthetic NYC fixture row."}
+{"id":"demo-nyc-p-002","permit_number":"NYC-100002","permit_type":"A2","status":"APPROVED","issue_date":"2025-11-05","reported_cost":"75000.00","latitude":"40.7131","longitude":"-74.0055","address":"200 DEMO AVE, NEW YORK, NY","description":"Synthetic NYC fixture row."}
