@@ -12,6 +12,7 @@
     "start": "node dist/server/server/index.js",
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.web.json --noEmit",
     "data:fixture": "node scripts/make-fixture.mjs",
+    "data:bundle-demo": "node scripts/make-public-demo.mjs",
     "data:seed": "node scripts/seed.mjs",
     "data:verify": "node scripts/verify-data.mjs",
     "data:fetch:chicago": "node scripts/fetch-permits.mjs chicago",

@@ -11,6 +11,26 @@ export function openDatabase(): DatabaseSync {
   return database;
 }
 
+export function createSchema(database: DatabaseSync): void {
+  database.exec(`
+    PRAGMA foreign_keys = ON;
+    CREATE TABLE IF NOT EXISTS datasets (dataset_id TEXT PRIMARY KEY, imported_at TEXT NOT NULL, manifest_json TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS permits (
+      id TEXT PRIMARY KEY, market TEXT NOT NULL, source TEXT NOT NULL, source_record_id TEXT NOT NULL, event_date TEXT NOT NULL,
+      permit_number TEXT, permit_type TEXT NOT NULL, reported_cost_cents INTEGER, address TEXT, description TEXT, community_area TEXT,
+      lat REAL, lng REAL, h3_cell TEXT, raw_json TEXT NOT NULL, warnings_json TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS permits_market_cell_date ON permits(market, h3_cell, event_date);
+    CREATE INDEX IF NOT EXISTS permits_market_type_date ON permits(market, permit_type, event_date);
+    CREATE TABLE IF NOT EXISTS approvals (
+      id TEXT PRIMARY KEY, market TEXT NOT NULL, event_date TEXT NOT NULL, borrower_name TEXT, approval_amount_cents INTEGER NOT NULL,
+      loan_status TEXT, city TEXT NOT NULL, state TEXT NOT NULL, raw_json TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS approvals_market_date ON approvals(market, event_date);
+    CREATE TABLE IF NOT EXISTS source_reports (source TEXT NOT NULL, market TEXT NOT NULL, report_json TEXT NOT NULL, PRIMARY KEY(source, market));
+  `);
+}
+
 export function seededDatasetId(): string | null {
   if (!existsSync(databasePath)) return null;
   const database = openDatabase();
