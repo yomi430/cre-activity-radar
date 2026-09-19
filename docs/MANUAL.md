@@ -82,6 +82,21 @@ H3 is the geographic grid used to group permits with usable publisher coordinate
 
 For a selected cell, absolute change is `current − prior`. When the prior count is greater than zero, the app calculates `(current − prior) / prior × 100` and rounds only for display. A prior count of zero and a positive current count displays **New activity**, without an invented infinite percentage. Both periods at zero display **No baseline**. A partial source displays **Comparison unavailable** because a sample cannot support a full-period growth ranking.
 
+## Investigation Brief
+
+Select an eligible area from the ranked queue to open its Investigation Brief. The brief is an explanation for an analyst's next research step, not a score or recommendation. It contains:
+
+- **Why it surfaced:** current and prior record counts, the absolute change, and baseline-aware comparison wording.
+- **What drove it:** the leading exact source permit types and their current/prior counts.
+- **Timing:** active current-window months, the longest consecutive active run, and the peak recorded month.
+- **Repeated supplied addresses:** areas with more current-period records, alongside links back to current evidence. These are leads to de-duplicate, not proof that records represent distinct projects or one project.
+- **Largest reported-cost records:** individual current records with a nonmissing applicant-reported estimate. They are not summed or interpreted as area investment.
+- **Data quality and limits:** source-coordinate scope for the cell, missing-cost coverage, and source-specific issuance semantics.
+- **What the evidence can and cannot suggest:** fixed language that separates an observed record pattern from a commercial conclusion.
+- **Recommended next checks:** source-record review, likely address/project de-duplication, and targeted property or market research outside the prototype.
+
+Use the brief to decide whether the selected area deserves the next research step. It cannot establish a construction start, completion, unique project, tenant choice, supply, demand, rent, valuation, or investment result.
+
 ## Evidence and provenance
 
 The area detail gives 24 zero-filled monthly permit counts and separates Current from Prior evidence. Evidence is paginated in groups of 25 records. It includes date, source permit type, address when supplied, and applicant estimate when reported. Click the permit type to open the **Record provenance** dialog:
@@ -208,3 +223,25 @@ Invoke-RestMethod 'http://127.0.0.1:3001/api/sources?market=CHICAGO'
 ## What comes next
 
 For proposed extensions and their boundaries, see [DECISIONS.md](DECISIONS.md). Useful future work includes analyst observation, source-version monitoring, documented parcel enrichment where appropriate, and a deliberately designed cross-market methodology. Each requires a new validation step before it becomes a product claim.
+
+## Product questions for reviewers
+
+### Is this just a government-data explorer?
+
+No. The published records are the input, but the product is organized around a CRE analyst's weekly-review decision: choose a short queue, understand why an area surfaced, inspect evidence, and decide what deserves deeper property or broker research. A city portal is the authoritative publisher for its source; this prototype is an auditable workflow across two different sources.
+
+### Could a city portal build it? What is the moat?
+
+It could. The distinction is workflow focus, not an exclusive technical capability. The prototype's differentiator is a controlled fixed-window comparison, transparent prioritization, explanation and quality diagnostics, retained evidence, and next checks across heterogeneous systems. It does not claim a durable moat, exclusive data, user adoption, or willingness to pay. Any future advantage would need to be earned through validated workflow integration, trusted enrichment, feedback, and operational reliability.
+
+### Does it predict a CRE outcome?
+
+No. It identifies a change in recorded permit activity to validate. It does not prove construction began or completed, a project is unique, a pattern is commercial, or that supply, demand, rent, valuation, or investment performance changed.
+
+### Why H3 and why two cities?
+
+H3 resolution 8 is a consistent display bucket for records with usable source coordinates. It is not a parcel, neighborhood, or submarket. Chicago and NYC test the same workflow against different permit systems while retaining their separate source semantics. The app does not compare or rank one city's cells against the other.
+
+### How should value be validated?
+
+Observe analysts using the queue in real weekly reviews, compare it with their existing research path, and examine whether the briefs changed a next action without creating misleading leads. Measure repeat use, evidence inspection, lead disposition, freshness needs, and whether analysts need better property/use enrichment before adding more visualization. No such interviews or outcome measurements have been completed for this prototype.

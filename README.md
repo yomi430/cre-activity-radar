@@ -1,6 +1,8 @@
 # CRE Activity Radar
 
-CRE Activity Radar is a local research prototype for a CRE analyst preparing a market review. It makes a deliberately narrow question easier to investigate: **where did recorded permit activity change, and which source records explain it?** The map and ranked area list help choose a place to inspect; the detail panel and source links make that choice auditable before it becomes a research conclusion.
+CRE Activity Radar is a local prototype for a **CRE market research analyst supporting brokers' weekly market review**. It converts public permit changes into an auditable investigation queue: **which local areas deserve the next research step, why did they surface, and which source records must be checked before a broker treats the pattern as meaningful?**
+
+Its output is an Investigation Brief for a selected area. The brief connects a fixed-window count change to its permit-type mix, current-period cadence, repeated supplied addresses, selected high reported-cost evidence, source-quality context, retained records, and recommended verification steps. It is a research triage aid, not a prediction, property valuation, investment recommendation, or demand signal.
 
 **Start with the task-oriented [product manual](docs/MANUAL.md)** for a guided tour, question index, source caveats, troubleshooting, and API examples.
 
@@ -8,7 +10,9 @@ The working hypothesis is that analysts benefit from transparent, count-based tr
 
 ## What it builds
 
-The application supports the same investigation workflow for **Chicago** and **New York City**. Choose a market, review its H3 grid of permit counts, select an area from the map or ranked list, compare the two fixed periods, and open the underlying permit evidence. The permit-type filter applies consistently to the map, list, trend, and evidence. Source-health panels report accepted, rejected, duplicate, out-of-scope, mapped, and unmapped rows so a viewer can assess coverage before interpreting a change.
+The application supports the same local investigation workflow for **Chicago** and **New York City**. Choose a market, review the ranked investigation queue, select an area, and read its Investigation Brief before opening its underlying permit evidence. The map is supporting geographic context; the queue and brief lead the workflow. The permit-type filter applies consistently to the queue, map, brief, trend, and evidence. Source-health panels report accepted, rejected, duplicate, out-of-scope, mapped, and unmapped rows so a viewer can assess coverage before interpreting a change.
+
+This is a product hypothesis, formed from desk research and the constraints of public data. No analyst interviews, adoption study, predictive validation, or measured time savings are claimed. The intended workflow and its explicit limits are in [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md).
 
 It also shows SBA 504 approvals as a separate city-labelled context panel and evidence list. Those approvals never affect permit-cell colors, rankings, or detail evidence. The application keeps the two indicators separate because an approval has a different geography, timing, and meaning from a permit record.
 
@@ -77,3 +81,9 @@ The seed reports balance for every source. `data:verify` passed its accounting, 
 ## Sources and further reading
 
 The verified source notes, field semantics, and retrieval caveats are in [docs/RESEARCH.md](docs/RESEARCH.md); the SBA field audit and exact borrower-city policy are in [docs/SBA_STATUS.md](docs/SBA_STATUS.md). [docs/DECISIONS.md](docs/DECISIONS.md) records the boundaries that keep the prototype from overstating what its data can support. [docs/DEMO.md](docs/DEMO.md) is a three-minute walkthrough.
+
+## Product positioning
+
+This is not a claim that public permit counts predict CRE outcomes. Government portals can and should remain the authoritative publisher and source-specific explorer. CRE Activity Radar is a product hypothesis about a different job: help a market research analyst form and validate a small weekly investigation queue across heterogeneous public systems.
+
+Its differentiation is the evidence-continuous workflow: fixed comparison windows, transparent prioritization, source-specific semantics, quality and provenance context, explainable diagnostics, and next checks. It uses no exclusive data and has no demonstrated durable moat, user adoption, willingness to pay, time savings, or predictive accuracy. [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md) gives interview-ready answers on differentiation, H3, two-city scope, buyers, limits, and how value should be validated.

@@ -1,5 +1,19 @@
 # Progress
 
+## 2026-09-19 value release
+
+The value upgrade is complete and verified. It adds the queue-first analyst workflow,
+deterministic Investigation Briefs, street/satellite basemaps, and a Data Operations
+view backed by safe allowlisted local jobs. Chicago and NYC are both supported.
+
+Final checks: typecheck passed; 10/10 unit/integration tests passed; public dataset
+verification passed; production build passed; and 3/3 Playwright flows passed across
+Chicago, NYC, mobile, and Data Operations. Generated desktop and Operations screenshots
+were reviewed. Old local CRE processes were terminated after testing.
+
+The content below records earlier implementation history and may describe checks that
+were still pending at that earlier checkpoint.
+
 Current task: T07 — complete public-data backend, API, and integration verification.
 
 The local runtime database is a full public snapshot named `public-full-5f0dea082481-91aa29bb1cde`. Chicago is frozen and reconciled at 63,482 rows; NYC DOB NOW Build is frozen and reconciled at 334,974 rows. Both are complete-query selected-field extracts for `[2024-07-01, 2026-07-01)`. The transactional SQLite import accepts 398,456 permits: Chicago 62,750 mapped / 732 unresolved, NYC 333,591 mapped / 1,383 unresolved.

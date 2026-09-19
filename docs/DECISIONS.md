@@ -1,5 +1,13 @@
 # Product and data decisions
 
+## An investigation queue, not a generic dashboard
+
+The primary persona is a CRE market research analyst supporting brokers' weekly market review. The prototype's output is a short investigation queue and an evidence-backed brief for a selected H3 area: why the area surfaced, what source-record patterns drive the count, relevant quality limits, retained records, and suggested verification steps. This makes the app useful as a research triage aid rather than presenting a map as an end in itself.
+
+The queue does not claim to identify opportunity. It prioritizes observable permit-record change under fixed windows and keeps the supporting evidence attached to that change. The map remains geographic context. The follow-on research decision remains with the analyst.
+
+No user interviews, measured time savings, predictive validation, or willingness-to-pay research has been completed. The target persona, buyer, and workflow are product hypotheses to validate through observation of weekly-review work.
+
 ## One investigation workflow, two source adapters
 
 Chicago Building Permits and NYC DOB NOW: Build are ingested through separate adapters into a common permit shape. This preserves each publisher’s identity, dates, type labels, retained raw fields, and source link while allowing one market selector, aggregation path, map, and evidence experience. NYC DOB NOW is not presented as all NYC construction activity; it excludes other permit systems. The adapter boundary is therefore a consistency mechanism, not a claim of semantic equivalence.
