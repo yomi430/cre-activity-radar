@@ -12,10 +12,13 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CRE Activity Radar' })).toBeVisible();
   await expect(page.getByText('Source quality')).toBeVisible();
+  await expect(page.getByLabel('Current permit count heat map legend')).toBeVisible();
 
   await expect(page.getByRole('heading', { name: 'Areas worth investigating' })).toBeVisible();
   await chooseFirstArea(page);
   await expect(page.getByRole('heading', { name: 'Why it surfaced' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Signal profile' })).toBeVisible();
+  await expect(page.getByText(/A concentrated pattern can be one site/)).toBeVisible();
   await page.getByRole('button', { name: 'Prior', exact: true }).click();
   await expect(page.getByText('Jul 2024–Jun 2025', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Current', exact: true }).click();
