@@ -11,5 +11,8 @@ Checks run:
 - `npm.cmd run typecheck` — passed.
 - `npm.cmd run build:web` — passed after the approved outside-sandbox rerun required by Vite/esbuild; output is in `dist/web`.
 - `git diff --check -- src/web/App.tsx src/web/styles.css` — passed (only line-ending warnings).
+- `npm.cmd run build` — passed after the approved outside-sandbox Vite/esbuild rerun.
+- `npx.cmd playwright test --list` — passed; the focused Chicago-to-NYC investigation test is discovered.
+- Direct integrated API flow against `http://127.0.0.1:3001` — both markets returned summary, cells, current evidence, record detail, and two source reports. Chicago: 8 types, 807 cells, 1,038 current records in the selected first cell; NYC: 21 types, 1,078 cells, 3,266 current records in the selected first cell.
 
-Remaining integration: backend routes are being finalized. Once they are available, start the integrated app and manually verify Chicago and NYC: market switch, low-volume map/list parity, cell selection, evidence period/page changes, record dialog, and 1440×900 / 390×844 layouts. No focused frontend test was added because no existing frontend test harness is present and a route-backed E2E test belongs with the integrated backend fixture.
+Browser limitation: `npm.cmd run test:e2e` cannot launch because Playwright Chromium is not installed (`chromium_headless_shell-1243/.../chrome-headless-shell.exe` is missing). No browser surface is registered for the computer-use tool, and its local in-app browser is unavailable, so desktop/mobile screenshots and manual visual checks could not be made in this environment. `npx.cmd playwright install chromium` would be required before rerunning the test and screenshot review.
