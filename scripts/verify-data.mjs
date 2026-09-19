@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { resolve } from 'node:path';
-const dbPath = process.env.RADAR_DB_PATH ?? resolve('data/runtime/radar.sqlite');
+const dbPath = process.env.RADAR_DB_PATH ?? resolve('data/runtime/radar.sqlite'); const rawDirectory = process.env.RADAR_RAW_DIR ?? resolve('data/raw'); const demoDirectory = process.env.RADAR_DEMO_DIR ?? resolve('data/demo');
 assert.ok(existsSync(dbPath), 'Database missing: run data:seed.');
 const db = new DatabaseSync(dbPath);
 try {
@@ -21,8 +21,9 @@ try {
     assert.ok(counts > 0, `${market} cell evidence`);
   }
   for (const market of ['CHICAGO','NYC']) { const report = JSON.parse(db.prepare('SELECT report_json FROM source_reports WHERE market=? AND source=?').get(market,'SBA_504').report_json); const n = db.prepare('SELECT COUNT(*) n FROM approvals WHERE market=?').get(market).n; assert.equal(n, report.acceptedRows, `${market} SBA accounting`); assert.equal(report.rowsRead, report.acceptedRows + report.rejectedRows + report.duplicateRows + report.outOfScopeRows, `${market} SBA source accounting`); }
-  if (existsSync('data/raw/chicago-permits-2024-07-01_2026-07-01.jsonl')) { const sidecar=JSON.parse(readFileSync('data/raw/chicago-permits-2024-07-01_2026-07-01.jsonl.manifest.json')); const sha=createHash('sha256').update(readFileSync('data/raw/chicago-permits-2024-07-01_2026-07-01.jsonl')).digest('hex'); assert.equal(sha,sidecar.sha256,'Chicago raw checksum'); }
-  if (existsSync('data/raw/nyc-permits-2024-07-01_2026-07-01.jsonl')) { const sidecar=JSON.parse(readFileSync('data/raw/nyc-permits-2024-07-01_2026-07-01.jsonl.manifest.json')); const sha=createHash('sha256').update(readFileSync('data/raw/nyc-permits-2024-07-01_2026-07-01.jsonl')).digest('hex'); assert.equal(sha,sidecar.sha256,'NYC raw checksum'); }
-  if (!existsSync('data/raw/chicago-permits-2024-07-01_2026-07-01.jsonl')) { const demo=JSON.parse(readFileSync('data/demo/manifest.json')); for (const item of demo.sources) { const sha=createHash('sha256').update(readFileSync(`data/demo/${item.file}`)).digest('hex'); assert.equal(sha,item.sha256,`${item.source} bundled sample checksum`); } }
+  const chicagoRaw=resolve(rawDirectory,'chicago-permits-2024-07-01_2026-07-01.jsonl'),nycRaw=resolve(rawDirectory,'nyc-permits-2024-07-01_2026-07-01.jsonl');
+  if (existsSync(chicagoRaw)) { const sidecar=JSON.parse(readFileSync(`${chicagoRaw}.manifest.json`)); const sha=createHash('sha256').update(readFileSync(chicagoRaw)).digest('hex'); assert.equal(sha,sidecar.sha256,'Chicago raw checksum'); }
+  if (existsSync(nycRaw)) { const sidecar=JSON.parse(readFileSync(`${nycRaw}.manifest.json`)); const sha=createHash('sha256').update(readFileSync(nycRaw)).digest('hex'); assert.equal(sha,sidecar.sha256,'NYC raw checksum'); }
+  if (!existsSync(chicagoRaw)) { const demo=JSON.parse(readFileSync(resolve(demoDirectory,'manifest.json'))); for (const item of demo.sources) { const sha=createHash('sha256').update(readFileSync(resolve(demoDirectory,item.file))).digest('hex'); assert.equal(sha,item.sha256,`${item.source} bundled sample checksum`); } }
   console.log(`Verified ${dataset.dataset_id}: permit, SBA, raw checksum, mapped/unmapped, window and evidence accounting.`);
 } finally { db.close(); }

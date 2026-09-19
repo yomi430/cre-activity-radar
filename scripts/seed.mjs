@@ -6,7 +6,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { parse } from 'csv-parse';
 import { latLngToCell } from 'h3-js';
 
-const p = { chicagoRaw: resolve('data/raw/chicago-permits-2024-07-01_2026-07-01.jsonl'), nycRaw: resolve('data/raw/nyc-permits-2024-07-01_2026-07-01.jsonl'), chicagoDemo: resolve('data/demo/chicago.jsonl'), nycDemo: resolve('data/demo/nyc.jsonl'), sba: resolve('data/raw/sba_504_fy2010_present_asof_260630.csv') };
+const rawDirectory = process.env.RADAR_RAW_DIR ?? resolve('data/raw'); const demoDirectory = process.env.RADAR_DEMO_DIR ?? resolve('data/demo');
+const p = { chicagoRaw: resolve(rawDirectory, 'chicago-permits-2024-07-01_2026-07-01.jsonl'), nycRaw: resolve(rawDirectory, 'nyc-permits-2024-07-01_2026-07-01.jsonl'), chicagoDemo: resolve(demoDirectory, 'chicago.jsonl'), nycDemo: resolve(demoDirectory, 'nyc.jsonl'), sba: process.env.RADAR_SBA_PATH ?? resolve(rawDirectory, 'sba_504_fy2010_present_asof_260630.csv') };
 const full = existsSync(p.chicagoRaw) && existsSync(p.nycRaw); const dbPath = process.env.RADAR_DB_PATH ?? resolve('data/runtime/radar.sqlite');
 const sourceUrl = { CHICAGO_PERMIT: 'https://data.cityofchicago.org/resource/ydr8-5enu.json', NYC_DOB_NOW: 'https://data.cityofnewyork.us/resource/rbx6-tga4.json', SBA_504: 'https://data.sba.gov/dataset/7a-504-foia' };
 const text = x => typeof x === 'string' && x.trim() ? x.trim() : null; const num = x => typeof x === 'number' || (typeof x === 'string' && x.trim()) ? (Number.isFinite(Number(x)) ? Number(x) : null) : null; const day = x => { if(typeof x!=='string'||!/^\d{4}-\d{2}-\d{2}/.test(x))return null;const d=x.slice(0,10),v=new Date(`${d}T00:00:00Z`);return Number.isNaN(v.valueOf())||v.toISOString().slice(0,10)!==d?null:d; };

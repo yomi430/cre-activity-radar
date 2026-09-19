@@ -24,11 +24,11 @@ describe('local admin jobs', () => {
     };
     const jobs = new AdminJobManager({ spawnCommand, workingDirectory: root, persistencePath: join(root, 'jobs.json') });
     const job = jobs.start('REFRESH_CHICAGO');
-    expect(calls).toEqual([{ command: process.execPath, args: ['scripts/fetch-permits.mjs', 'chicago'], shell: false }]);
+    expect(calls).toEqual([{ command: process.execPath, args: ['scripts/refresh-market.mjs', 'chicago'], shell: false }]);
     expect(jobs.start('VERIFY_DATASET')).toBeNull();
-    child.stdout.emit('data', 'validated staged rows\n');
+    child.stdout.emit('data', 'STAGE CHECKING_PUBLISHER\nOUTCOME UP_TO_DATE\n');
     child.emit('close', 0);
-    expect(jobs.status()).toMatchObject({ currentJob: null, lastJob: { id: job?.id, status: 'SUCCEEDED', exitCode: 0, stdout: 'validated staged rows\n' } });
+    expect(jobs.status()).toMatchObject({ currentJob: null, lastJob: { id: job?.id, status: 'SUCCEEDED', stage: 'COMPLETE', outcome: 'UP_TO_DATE', exitCode: 0 } });
     expect(JSON.parse(readFileSync(join(root, 'jobs.json'), 'utf8'))).toMatchObject({ status: 'SUCCEEDED' });
   });
 

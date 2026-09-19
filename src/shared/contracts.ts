@@ -186,6 +186,10 @@ export interface AdminJob {
   id: string;
   action: AdminJobAction;
   status: 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'INTERRUPTED';
+  /** Current machine-readable stage emitted by the fixed local workflow. */
+  stage: string;
+  /** Refresh result. UP_TO_DATE means its fixed analysis window did not change. */
+  outcome: 'UP_TO_DATE' | 'UPDATED' | null;
   startedAt: string;
   finishedAt: string | null;
   exitCode: number | null;

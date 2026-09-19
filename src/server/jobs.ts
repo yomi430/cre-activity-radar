@@ -8,10 +8,10 @@ import type { AdminJob, AdminJobAction } from '../shared/contracts.js';
 const logPath = resolve('data/runtime/admin-jobs.json');
 const outputLimit = 32_000;
 const commands: Record<AdminJobAction, { executable: string; args: string[] }> = {
-  REFRESH_CHICAGO: { executable: process.execPath, args: ['scripts/fetch-permits.mjs', 'chicago'] },
-  REFRESH_NYC: { executable: process.execPath, args: ['scripts/fetch-permits.mjs', 'nyc'] },
+  REFRESH_CHICAGO: { executable: process.execPath, args: ['scripts/refresh-market.mjs', 'chicago'] },
+  REFRESH_NYC: { executable: process.execPath, args: ['scripts/refresh-market.mjs', 'nyc'] },
   REFRESH_SBA: { executable: process.execPath, args: ['scripts/fetch-sba.mjs'] },
-  REBUILD_DATABASE: { executable: process.execPath, args: ['scripts/seed.mjs'] },
+  REBUILD_DATABASE: { executable: process.execPath, args: ['scripts/rebuild-database.mjs'] },
   VERIFY_DATASET: { executable: process.execPath, args: ['scripts/verify-data.mjs'] },
 };
 
@@ -40,7 +40,7 @@ export class AdminJobManager {
     if (!Object.hasOwn(commands, action)) throw new RangeError('Unsupported local pipeline action.');
     if (this.current) return null;
     const command = commands[action];
-    const job: AdminJob = { id: randomUUID(), action, status: 'RUNNING', startedAt: new Date().toISOString(), finishedAt: null, exitCode: null, stdout: '', stderr: '', outputTruncated: false, note: null };
+    const job: AdminJob = { id: randomUUID(), action, status: 'RUNNING', stage: 'QUEUED', outcome: null, startedAt: new Date().toISOString(), finishedAt: null, exitCode: null, stdout: '', stderr: '', outputTruncated: false, note: null };
     this.current = job;
     this.persist(job);
     let child: ChildProcess;
@@ -50,7 +50,7 @@ export class AdminJobManager {
       this.finish(job, 'FAILED', null, `Could not start allowlisted job: ${error instanceof Error ? error.message : String(error)}`);
       return job;
     }
-    child.stdout?.on('data', chunk => { const next = boundedAppend(job.stdout, String(chunk)); job.outputTruncated ||= next.length < job.stdout.length + String(chunk).length; job.stdout = next; this.persist(job); });
+    child.stdout?.on('data', chunk => { const text = String(chunk); const next = boundedAppend(job.stdout, text); job.outputTruncated ||= next.length < job.stdout.length + text.length; job.stdout = next; this.applyStage(job, next); this.persist(job); });
     child.stderr?.on('data', chunk => { const next = boundedAppend(job.stderr, String(chunk)); job.outputTruncated ||= next.length < job.stderr.length + String(chunk).length; job.stderr = next; this.persist(job); });
     child.once('error', error => this.finish(job, 'FAILED', null, error.message));
     child.once('close', code => this.finish(job, code === 0 ? 'SUCCEEDED' : 'FAILED', code, null));
@@ -58,10 +58,16 @@ export class AdminJobManager {
   }
   private finish(job: AdminJob, status: AdminJob['status'], exitCode: number | null, note: string | null) {
     if (job.finishedAt) return;
-    job.status = status; job.exitCode = exitCode; job.finishedAt = new Date().toISOString(); job.note = note;
+    job.status = status; job.stage = status === 'SUCCEEDED' ? 'COMPLETE' : status === 'FAILED' ? 'FAILED' : job.stage; job.exitCode = exitCode; job.finishedAt = new Date().toISOString(); job.note = note;
     this.last = job;
     if (this.current?.id === job.id) this.current = null;
     this.persist(job);
+  }
+  private applyStage(job: AdminJob, output: string) {
+    for (const line of output.split(/\r?\n/)) {
+      const stage = /^STAGE ([A-Z_]+)/.exec(line); if (stage) job.stage = stage[1];
+      const outcome = /^OUTCOME (UP_TO_DATE|UPDATED)/.exec(line); if (outcome) job.outcome = outcome[1] as AdminJob['outcome'];
+    }
   }
   private loadLast() {
     try {
