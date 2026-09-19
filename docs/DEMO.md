@@ -1,0 +1,13 @@
+# Three-minute demo script
+
+**0:00–0:20 — frame the question.** Open CRE Activity Radar and say: “This is an investigation aid, not a market forecast. It asks where recorded permit activity changed, then lets us inspect the records before deciding what warrants further research.” Point out the fixed comparison label: Jul 2025–Jun 2026 versus Jul 2024–Jun 2025.
+
+**0:20–1:15 — Chicago workflow and evidence.** Select Chicago. Note the map legend uses current permit count while the area list can rank by absolute change or current count; neither is an opportunity score. Select a visible H3 area from the list or map. Show current/prior counts, absolute change, the safe percentage treatment, and the 24-month series. Open current-period evidence and one record’s source link. Explain that the date is a recorded issuance event, not a project or construction start, and that any displayed cost is the applicant’s estimate, not area investment.
+
+**1:15–1:55 — data quality.** Open the Chicago source-health section. Explain mapped versus unmapped permits and the accepted/rejected/duplicate accounting. A record without a usable coordinate still contributes to city-level permit activity but cannot be assigned to a cell. State that H3 resolution 8 is a repeatable grid for exploration, not a neighborhood or a claim of exact location.
+
+**1:55–2:35 — NYC uses the same contract without pretending it is the same source.** Switch to NYC. Repeat the selection flow and change the permit-type filter. Show that map, list, trend, and evidence respond together. Open a DOB NOW record. Explain that NYC’s DOB NOW Build dataset has its own coverage and issuance records are not unique construction projects; the shared UI does not erase those source differences. Do not compare a Chicago area ranking with a NYC area ranking.
+
+**2:35–3:00 — SBA context and close.** Show the SBA 504 panel and its evidence list. Say: “These are borrower-city-labelled 504 approvals, not permit-cell activity. They do not color cells or change the ranking. An approval is not a disbursement, completed project, or measure of demand, and the status shown is a later status as of the publisher snapshot.” For NYC, mention the exact five included borrower-city labels and that aliases such as Flushing are excluded. Close with: “The next step is analyst-led property and market research on the records that survive this transparent first pass.”
+
+If the source-health panel reports a partial source, say that its counts are samples and that growth ranking/percentages are disabled. Do not present sample trends as citywide findings.
