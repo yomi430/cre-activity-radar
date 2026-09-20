@@ -58,8 +58,57 @@ Invoke-RestMethod 'https://data.cityofnewyork.us/resource/8h5j-fqxa.json?$select
 5. UI labels: `Recorded parcel sale` (Chicago) and `Recorded deed` (NYC ACRIS, four-borough). The allowed next action is property/ownership research; never causality or prediction.
 6. Required tests: duplicate identities, multi-parcel/deed associations, unmatched geography, correction snapshots, staged-refresh idempotence, UI/export coverage disclosures, and no permit-rank change.
 
-## Unresolved checks before code
+## Frozen NYC ACRIS window audit — 2026-09-20
+
+The remaining pre-implementation checks were completed against official Socrata data for
+Master `recorded_datetime` in `[2024-07-01, 2026-07-01)`. The reproducible audit is
+`scripts/inspect-nyc-acris.mjs`; pure identity helpers and tests are in
+`scripts/nyc-acris-audit-lib.mjs` and `tests/nyc-acris-audit.test.ts`. The retained aggregate
+report is `data/audits/nyc-acris-2024-07-01-2026-07-01.json`, SHA-256
+`106a8c233f058f08c045ebb707c29b994d1159133c9c686dd9b645959c6fb5c7`.
+
+- Publisher versions stayed stable during extraction: Master and Legals were updated
+  2026-09-08; PLUTO was updated 2026-08-24.
+- Master returned 596,922 rows but 595,690 distinct document IDs. There were 1,220
+  duplicate-ID groups and 1,232 rows beyond the first, with a largest group of three.
+  Production ingestion must reconcile duplicate Master rows deterministically and expose
+  the duplicate count; it cannot assume one row per `document_id`.
+- Exact raw `DEED` produced 114,832 rows and 114,356 document IDs. The audit excludes
+  482,090 rows with other raw types, including 21,490 `DEED, TS`, 3,237 `DEED, LE`, and
+  97 `DEED COR`. These remain visible as excluded-type quality counts.
+- All 114,356 exact-DEED document IDs had Legal rows. The 122,931 Legal rows formed
+  122,383 distinct association identities; 503 identities were duplicated, with 548 rows
+  beyond the first. Association identity therefore includes document ID, normalized BBL,
+  easement, partial-lot, air-rights, and subterranean-rights flags and is de-duplicated.
+- Multi-parcel deeds are material: 109,291 documents mapped to one distinct BBL, 4,114 to
+  two, 589 to three, 150 to four, and 212 to five or more. Count documents distinctly at
+  city level and once per H3; never sum H3 counts into a city total.
+- PLUTO matched only 72,888 of 111,568 distinct Legal BBLs (65.33%). On association rows,
+  81,765 of 122,931 matched (66.51%). Of matched BBLs, 99.87% had coordinates. This is a
+  serious coverage limitation: unmatched deeds remain in city totals and quality counts,
+  while only matched coordinate-bearing BBLs receive `PARCEL_CENTROID` H3 placement.
+- Master and Legal rows exposed the same set of `good_through_date` values. Dates extend
+  past the event window because corrected/current source rows retain publisher snapshot
+  dates; `good_through_date` is freshness metadata, never the transaction event date.
+
+Reproduce the compact recent smoke audit with `node scripts/inspect-nyc-acris.mjs`. The
+full fixed-window audit uses PowerShell environment variables:
+
+```powershell
+$env:ACRIS_MODE='window'
+node scripts/inspect-nyc-acris.mjs
+Remove-Item Env:ACRIS_MODE
+```
+
+**Decision: implementation GO with strict coverage controls.** Ship only an NYC
+four-borough, exact-`DEED`, separately sourced recorded-deed context. Use distinct document
+counts, retain multi-BBL associations, never expose `document_amt` as price, never include
+Parties initially, keep unmatched deeds visible, and never modify permit ranking.
+
+## Remaining limits
 
 - Chicago: audit an official PIN geometry/city membership source and its licensing before mapping/counting Chicago cells.
-- NYC: run a frozen Master+Legals snapshot analysis for exact duplicate associations, allowlist coverage, multi-BBL documents, PLUTO match rate, and `good_through_date` coherence.
+- NYC: determine the duplicate-Master winner rule from retained raw rows during ingestion
+  design; reject activation if duplicates disagree on material event fields and cannot be
+  resolved without an explicit source rule.
 - Both: do not use parties/ownership names, sales price comparisons, or cross-city totals until separately justified.

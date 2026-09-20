@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-09-20 NYC ACRIS frozen audit
+
+The fixed-window official ACRIS Master/Legals and BBL-scoped PLUTO audit is complete and
+reproducible. It established duplicate Master and Legal identities, an exact-DEED scope,
+multi-BBL distribution, stable publisher versions, coherent good-through date sets, and a
+65.33% distinct-BBL PLUTO match rate. The result supports a bounded four-borough recorded-
+deed context with strict unmatched-geography and duplicate accounting; it does not support
+sale-price, Staten Island, party, causality, or permit-ranking claims.
+
 ## 2026-09-20 focused workspace navigation
 
 The analyst experience is split into City discovery, Research workspace, conditional NYC entitlements, Data & methods, and Data Operations. H3 selection opens Research; Back to whole city retains market/global filters while clearing H3-local URL state. Research co-locates the latest five H3 visits and saved signals while explaining navigation history versus deliberate lead inventory. Data & methods now has a plain-language, auditable CRE lens catalog. Validation passed: 40/40 Vitest, typecheck, production build, and 11/11 Playwright tests with visual inspection.
