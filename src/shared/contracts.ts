@@ -172,6 +172,66 @@ export interface InvestigationDataQuality {
   missingReportedCost: { current: number; currentShare: number | null; caveat: string };
   sourceSemantics: string;
 }
+/** A record-count composition only; neither lens nor type rows represent projects. */
+export interface H3CompositionRow {
+  key: string;
+  label: string;
+  current: number;
+  prior: number;
+  absolute: number;
+  currentShare: number | null;
+}
+export interface H3MonthlyCadenceRow {
+  month: string;
+  period: Period;
+  count: number;
+}
+export interface H3ReportedCostCoverage {
+  currentWithReportedCost: number;
+  currentMissingReportedCost: number;
+  currentCoverageShare: number | null;
+  caveat: string;
+}
+/**
+ * The unfiltered contents of a selected H3 cell. This intentionally remains
+ * separate from the analyst's type/lens drill-down so the cell can be understood
+ * before a filter hides part of it.
+ */
+export interface H3SubsectionBreakdown {
+  scope: { permitType: 'ALL'; lens: 'ALL' };
+  permitCount: Change;
+  lensComposition: H3CompositionRow[];
+  permitTypeComposition: H3CompositionRow[];
+  monthlyCadence: H3MonthlyCadenceRow[];
+  leadingAddresses: RepeatedAddressSignal[];
+  reportedCostCoverage: H3ReportedCostCoverage;
+  caveat: string;
+}
+export type QualifiedSignalPattern =
+  | 'BROAD_BASED_LOCAL_ACTIVITY'
+  | 'CONCENTRATED_CAPITAL_PROGRAM_LEAD'
+  | 'EMERGING_LOW_VOLUME_LEAD'
+  | 'ADMINISTRATIVE_PROCESS_SURGE'
+  | 'WEAK_OR_DECLINING_SIGNAL';
+export type SuggestedDisposition = 'ESCALATE' | 'INVESTIGATE' | 'MONITOR' | 'DISMISS_AS_LOW_INFORMATION';
+export interface QualifiedSignalRule {
+  id: string;
+  threshold: string;
+  evidence: string;
+}
+/** A deterministic, evidence-first triage aid. It is not a score or prediction. */
+export interface QualifiedSignal {
+  ruleVersion: 'qualified-signal-v1.0';
+  pattern: QualifiedSignalPattern;
+  label: string;
+  observedPattern: string;
+  hypothesis: string;
+  alternativeExplanation: string;
+  suggestedDisposition: SuggestedDisposition;
+  triggeredRules: QualifiedSignalRule[];
+  recommendedNextChecks: string[];
+  caveat: string;
+}
 export interface InvestigationBrief {
   market: Market;
   h3Cell: string;
@@ -187,6 +247,8 @@ export interface InvestigationBrief {
   repeatedAddresses: RepeatedAddressSignal[];
   largestCurrentPermits: LargestPermitSignal[];
   dataQuality: InvestigationDataQuality;
+  subsectionBreakdown: H3SubsectionBreakdown;
+  qualifiedSignal: QualifiedSignal;
   canSuggest: string[];
   cannotConclude: string[];
   recommendedNextChecks: string[];

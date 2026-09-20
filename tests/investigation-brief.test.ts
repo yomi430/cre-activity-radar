@@ -43,6 +43,16 @@ describe('investigation brief', () => {
     expect(brief?.repeatedAddresses[0]).toMatchObject({ address: '100 Alpha St', current: 3, prior: 2, absolute: 1, currentRecordIds: ['c-alpha-3', 'c-alpha-2', 'c-alpha-1'] });
     expect(brief?.dataQuality.missingReportedCost).toMatchObject({ current: 1, currentShare: 0.2 });
     expect(brief?.largestCurrentPermits[0]).toMatchObject({ id: 'c-alpha-1', reportedCostCents: 90000 });
+    expect(brief?.subsectionBreakdown).toMatchObject({
+      scope: { permitType: 'ALL', lens: 'ALL' },
+      permitCount: { current: 5, previous: 3, absolute: 2 },
+      reportedCostCoverage: { currentWithReportedCost: 4, currentMissingReportedCost: 1, currentCoverageShare: 0.8 },
+    });
+    expect(brief?.subsectionBreakdown.permitTypeComposition).toContainEqual(expect.objectContaining({ key: 'Renovation', current: 3, prior: 2, currentShare: 0.6 }));
+    expect(brief?.subsectionBreakdown.monthlyCadence.find(row => row.month === '2025-08')).toMatchObject({ period: 'current', count: 2 });
+    // The fixture retains no work-type details, so its otherwise unknown source values
+    // are deliberately visible as unclassified rather than promoted to a CRE lead.
+    expect(brief?.qualifiedSignal).toMatchObject({ pattern: 'ADMINISTRATIVE_PROCESS_SURGE', suggestedDisposition: 'DISMISS_AS_LOW_INFORMATION', ruleVersion: 'qualified-signal-v1.0' });
     expect(brief?.cannotConclude.join(' ')).toMatch(/not unique projects/i);
     db.close();
   });

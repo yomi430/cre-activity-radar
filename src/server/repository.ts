@@ -1,12 +1,13 @@
 import type { DatabaseSync } from 'node:sqlite';
-import type { ApprovalEvidence, CellSignal, InvestigationBrief, InvestigationDriver, LensId, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData } from '../shared/contracts.js';
+import type { ApprovalEvidence, CellSignal, H3CompositionRow, H3SubsectionBreakdown, InvestigationBrief, InvestigationDriver, LensId, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData } from '../shared/contracts.js';
 import { change } from '../domain/change.js';
 import { months, WINDOWS } from '../domain/dates.js';
-import { persistenceForCurrent, sortDrivers, surfacedNarrative } from '../domain/investigation.js';
+import { persistenceForCurrent, qualifiedSignalFor, sortDrivers, surfacedNarrative } from '../domain/investigation.js';
 import { polygonFor } from '../domain/spatial.js';
-import { classifyPermit, LENS_DEFINITIONS, lensWhere, mappingsForMarket } from '../domain/lenses.js';
+import { classifyPermit, lensDefinition, LENS_DEFINITIONS, lensWhere, mappingsForMarket } from '../domain/lenses.js';
 
 type PermitRow = { id: string; market: Market; source: 'CHICAGO_PERMIT' | 'NYC_DOB_NOW'; event_date: string; permit_number: string | null; permit_type: string; reported_cost_cents: number | null; address: string | null; description: string | null; h3_cell: string | null; lat: number | null; lng: number | null; warnings_json: string; raw_json: string };
+type BreakdownPermitRow = Pick<PermitRow, 'event_date' | 'permit_type' | 'reported_cost_cents' | 'raw_json'>;
 const dates = [WINDOWS.prior.start, WINDOWS.prior.endExclusive, WINDOWS.current.start, WINDOWS.current.endExclusive];
 function filterWhere(market: Market, permitType: string, lens: LensId) {
   const type = permitType === 'ALL' ? { clause: '', params: [] as string[] } : { clause: ' AND permit_type = ?', params: [permitType] };
@@ -49,6 +50,71 @@ function sourceSemantics(market: Market): string {
     : 'NYC DOB NOW: Build records are approved permit issuances. The source does not represent all NYC permit systems, and records are not unique development projects.';
 }
 
+function compositionRows(values: Map<string, { label: string; current: number; prior: number }>, totalCurrent: number): H3CompositionRow[] {
+  return [...values.entries()]
+    .map(([key, value]) => ({ key, label: value.label, current: value.current, prior: value.prior, absolute: value.current - value.prior, currentShare: totalCurrent > 0 ? value.current / totalCurrent : null }))
+    .sort((a, b) => b.current - a.current || b.absolute - a.absolute || a.label.localeCompare(b.label));
+}
+
+/** The unfiltered cell contents remain available even when an analyst drills into a type/lens subset. */
+function subsectionBreakdownFor(db: DatabaseSync, market: Market, cell: string): H3SubsectionBreakdown {
+  const rows = db.prepare(`SELECT event_date, permit_type, reported_cost_cents, raw_json FROM permits
+    WHERE market = ? AND h3_cell = ? AND event_date >= ? AND event_date < ?`)
+    .all(market, cell, WINDOWS.prior.start, WINDOWS.current.endExclusive) as BreakdownPermitRow[];
+  const current = rows.filter(row => row.event_date >= WINDOWS.current.start);
+  const prior = rows.length - current.length;
+  const lenses = new Map<string, { label: string; current: number; prior: number }>();
+  const types = new Map<string, { label: string; current: number; prior: number }>();
+  const monthly = new Map<string, number>();
+  for (const row of rows) {
+    const isCurrent = row.event_date >= WINDOWS.current.start;
+    const classify = classifyPermit(market, row.permit_type, JSON.parse(row.raw_json) as Record<string, unknown>);
+    const lens = lensDefinition(classify.lens);
+    const lensValue = lenses.get(classify.lens) ?? { label: lens.label, current: 0, prior: 0 };
+    lensValue[isCurrent ? 'current' : 'prior'] += 1;
+    lenses.set(classify.lens, lensValue);
+    const typeValue = types.get(row.permit_type) ?? { label: row.permit_type, current: 0, prior: 0 };
+    typeValue[isCurrent ? 'current' : 'prior'] += 1;
+    types.set(row.permit_type, typeValue);
+    const month = row.event_date.slice(0, 7);
+    monthly.set(month, (monthly.get(month) ?? 0) + 1);
+  }
+  const missingCost = current.filter(row => row.reported_cost_cents === null).length;
+  return {
+    scope: { permitType: 'ALL', lens: 'ALL' },
+    permitCount: change(current.length, prior, comparable(db, market)),
+    lensComposition: compositionRows(lenses, current.length),
+    permitTypeComposition: compositionRows(types, current.length),
+    monthlyCadence: months().map(month => ({ month, period: month >= WINDOWS.current.start.slice(0, 7) ? 'current' as const : 'prior' as const, count: monthly.get(month) ?? 0 })),
+    leadingAddresses: repeatedAddressesFor(db, 'market = ? AND h3_cell = ?', [market, cell]).map(row => ({
+      ...row,
+      evidencePath: `/api/cells/${cell}/evidence?${new URLSearchParams({ market, permitType: 'ALL', lens: 'ALL', period: 'current' }).toString()}`,
+    })),
+    reportedCostCoverage: {
+      currentWithReportedCost: current.length - missingCost,
+      currentMissingReportedCost: missingCost,
+      currentCoverageShare: current.length > 0 ? (current.length - missingCost) / current.length : null,
+      caveat: 'Reported costs are incomplete applicant-reported record fields. They are not project budgets or investment totals.'
+    },
+    caveat: 'Composition rows count permit records in this H3 cell. Lenses and exact types do not represent distinct projects, uses, or additive investment.'
+  };
+}
+
+function repeatedAddressesFor(db: DatabaseSync, base: string, baseParams: string[]) {
+  const addressRows = db.prepare(`SELECT address,
+      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior,
+      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current
+      FROM permits WHERE ${base} AND address IS NOT NULL AND trim(address) <> ''
+      GROUP BY address HAVING current > 0
+      ORDER BY (current - prior) DESC, current DESC, address ASC LIMIT 5`)
+    .all(dates[0], dates[1], dates[2], dates[3], ...baseParams) as Array<{ address: string; prior: number; current: number }>;
+  return addressRows.map(row => {
+    const ids = (db.prepare(`SELECT id FROM permits WHERE ${base} AND address = ? AND event_date >= ? AND event_date < ? ORDER BY event_date DESC, id ASC LIMIT 10`)
+      .all(...baseParams, row.address, WINDOWS.current.start, WINDOWS.current.endExclusive) as Array<{ id: string }>).map(record => record.id);
+    return { address: row.address, prior: row.prior ?? 0, current: row.current ?? 0, absolute: (row.current ?? 0) - (row.prior ?? 0), currentRecordIds: ids, evidencePath: '' };
+  });
+}
+
 /**
  * Builds an auditable research queue item from source records for one H3 cell.
  * The output intentionally contains no modeled score, causal claim, or prediction.
@@ -70,19 +136,7 @@ export function investigationBriefFor(db: DatabaseSync, market: Market, cell: st
   const persistence = persistenceForCurrent(signal.monthly);
   const missing = db.prepare(`SELECT COUNT(*) AS n FROM permits WHERE ${base} AND event_date >= ? AND event_date < ? AND reported_cost_cents IS NULL`)
     .get(...baseParams, WINDOWS.current.start, WINDOWS.current.endExclusive) as { n: number };
-  const addressRows = db.prepare(`SELECT address,
-      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior,
-      SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current
-      FROM permits WHERE ${base} AND address IS NOT NULL AND trim(address) <> ''
-      GROUP BY address HAVING current > 0
-      ORDER BY (current - prior) DESC, current DESC, address ASC LIMIT 5`)
-    .all(dates[0], dates[1], dates[2], dates[3], ...baseParams) as Array<{ address: string; prior: number; current: number }>;
-  const repeatedAddresses = addressRows.map(row => {
-    const ids = (db.prepare(`SELECT id FROM permits WHERE ${base} AND address = ? AND event_date >= ? AND event_date < ? ORDER BY event_date DESC, id ASC LIMIT 10`)
-      .all(...baseParams, row.address, WINDOWS.current.start, WINDOWS.current.endExclusive) as Array<{ id: string }>).map(record => record.id);
-    const params = new URLSearchParams({ market, permitType, lens, period: 'current' });
-    return { address: row.address, prior: row.prior ?? 0, current: row.current ?? 0, absolute: (row.current ?? 0) - (row.prior ?? 0), currentRecordIds: ids, evidencePath: `/api/cells/${cell}/evidence?${params.toString()}` };
-  });
+  const repeatedAddresses = repeatedAddressesFor(db, base, baseParams).map(row => ({ ...row, evidencePath: `/api/cells/${cell}/evidence?${new URLSearchParams({ market, permitType, lens, period: 'current' }).toString()}` }));
   const largestCurrentPermits = (db.prepare(`SELECT id, event_date, address, permit_type, reported_cost_cents FROM permits WHERE ${base}
       AND event_date >= ? AND event_date < ? AND reported_cost_cents IS NOT NULL
       ORDER BY reported_cost_cents DESC, event_date DESC, id ASC LIMIT 5`)
@@ -109,6 +163,33 @@ export function investigationBriefFor(db: DatabaseSync, market: Market, cell: st
     ...(missing.n > 0 ? ['Account for records without a reported cost before using cost fields in further research.'] : []),
     ...(counts.basis === 'NO_BASELINE' ? ['Check prior-period source coverage and record semantics before interpreting a zero prior count as a new trend.'] : []),
   ];
+  const qualifiedRows = db.prepare(`SELECT event_date, permit_type, reported_cost_cents, address, raw_json FROM permits WHERE ${base}`)
+    .all(...baseParams) as Array<BreakdownPermitRow & { address: string | null }>;
+  const currentQualified = qualifiedRows.filter(row => row.event_date >= WINDOWS.current.start && row.event_date < WINDOWS.current.endExclusive);
+  const lensCounts = new Map<LensId, number>();
+  const typeCounts = new Map<string, number>();
+  const addressCounts = new Map<string, number>();
+  for (const row of currentQualified) {
+    const classification = classifyPermit(market, row.permit_type, JSON.parse(row.raw_json) as Record<string, unknown>);
+    lensCounts.set(classification.lens, (lensCounts.get(classification.lens) ?? 0) + 1);
+    typeCounts.set(row.permit_type, (typeCounts.get(row.permit_type) ?? 0) + 1);
+    if (row.address?.trim()) addressCounts.set(row.address, (addressCounts.get(row.address) ?? 0) + 1);
+  }
+  const topByCount = <T>(values: Map<T, number>) => [...values.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))[0] ?? null;
+  const topAddress = topByCount(addressCounts);
+  const topType = topByCount(typeCounts);
+  const denominator = currentQualified.length;
+  const lowInformation = ['TEMPORARY_LOGISTICS', 'ADMIN_LOW_INFORMATION', 'UNCLASSIFIED'] as const;
+  const primary = ['GROUND_UP_SITE', 'REINVESTMENT', 'BUILDING_SYSTEMS'] as const;
+  const lowInformationShare = denominator ? lowInformation.reduce((sum, item) => sum + (lensCounts.get(item) ?? 0), 0) / denominator : 0;
+  const primaryLensShare = denominator ? primary.reduce((sum, item) => sum + (lensCounts.get(item) ?? 0), 0) / denominator : 0;
+  const qualifiedSignal = qualifiedSignalFor({
+    change: counts, persistence,
+    topAddress: topAddress ? { address: topAddress[0], current: topAddress[1], share: topAddress[1] / denominator } : null,
+    topPermitType: topType ? { permitType: topType[0], current: topType[1], share: topType[1] / denominator } : null,
+    lowInformationShare, primaryLensShare,
+    hasMaterialRecord: currentQualified.some(row => (row.reported_cost_cents ?? 0) >= 1_000_000_000),
+  });
   return {
     market, h3Cell: cell, permitType, lens, selection: selection(permitType, lens), label: signal.label, windows: WINDOWS, permitCount: counts,
     whySurfaced: { narrative: surfacedNarrative(counts, permitType), facts }, drivers,
@@ -118,6 +199,8 @@ export function investigationBriefFor(db: DatabaseSync, market: Market, cell: st
       missingReportedCost: { current: missing.n ?? 0, currentShare: totalCurrent > 0 ? (missing.n ?? 0) / totalCurrent : null, caveat: 'Missing reported cost is not zero. Reported costs remain record-level evidence and are not a project or investment total.' },
       sourceSemantics: sourceSemantics(market),
     },
+    subsectionBreakdown: subsectionBreakdownFor(db, market, cell),
+    qualifiedSignal,
     canSuggest, cannotConclude, recommendedNextChecks,
   };
 }
