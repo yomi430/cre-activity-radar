@@ -5,8 +5,9 @@ import { DatabaseSync } from 'node:sqlite';
 import { describe, expect, it } from 'vitest';
 import { createSchema } from '../src/server/db.js';
 import { ingestZapSnapshot, zapSummaryFor } from '../src/server/zap.js';
-import { fetchZapSnapshot, zapLocalSnapshot, zapSnapshotPaths } from '../scripts/zap-source.mjs';
+import { fetchZapSnapshot, zapLocalSnapshot, zapSnapshotPaths, zapStoredSnapshots, zapStoredSnapshotsThrough } from '../scripts/zap-source.mjs';
 import { refreshZap } from '../scripts/refresh-zap.mjs';
+import { seedZapLiveSnapshot } from '../scripts/seed-zap-fixture.mjs';
 
 type Row = Record<string, unknown>;
 type Fixture = { projects: Row[]; bbls: Row[]; pluto: Row[]; updated?: number };
@@ -128,5 +129,28 @@ describe('NYC ZAP live refresh boundary', () => {
     // the same publisher version remains an UPDATE, not an UP_TO_DATE no-op.
     expect(retry.outcome).toBe('UPDATED');
     expect(zapLocalSnapshot(raw)?.snapshotId).toBe(next.snapshotId);
+  });
+
+  it('replays retained immutable snapshots in order so history and soft removals survive a database rebuild', async () => {
+    const raw = mkdtempSync(join(tmpdir(), 'radar-zap-history-'));
+    const first = await fetchZapSnapshot({ rawDirectory: raw, fetchImpl: publisher({ ...fixture(2), updated: 1 }), log: () => {} });
+    const second = await fetchZapSnapshot({ rawDirectory: raw, fetchImpl: publisher({ ...fixture(1), updated: 2 }), activate: false, log: () => {} });
+    expect(zapStoredSnapshots(raw)).toHaveLength(2);
+    // A failed staging extraction is retained for audit but cannot slip into a
+    // normal seed; only an explicit staged rebuild is permitted to include it.
+    expect(zapStoredSnapshotsThrough(raw, zapLocalSnapshot(raw)).map(snapshot => snapshot.snapshotId)).toEqual([first.snapshotId]);
+    const snapshots = zapStoredSnapshotsThrough(raw, second);
+    expect(snapshots.map(snapshot => snapshot.snapshotId)).toEqual([first.snapshotId, second.snapshotId]);
+    const db = new DatabaseSync(':memory:');
+    try {
+      snapshots.forEach((snapshot, index) => seedZapLiveSnapshot(db, snapshot, index === 0));
+      expect(zapSummaryFor(db).coverage).toMatchObject({
+        allTrackedProjects: 2,
+        includedProjects: 1,
+        possiblyRemovedProjects: 1,
+        possiblyRemovedBblRows: 1,
+        changeHistoryAvailable: true,
+      });
+    } finally { db.close(); }
   });
 });
