@@ -145,6 +145,21 @@ Chicago accepts exact normalized borrower city `CHICAGO`, Illinois. NYC accepts 
 The verified available geography is borrower city, not a project coordinate or parcel. Assigning city-labelled or ZIP-level financing to one small grid cell would create a false localized signal. SBA 504 `GrossApproval` is total loan approval amount, not a disbursement, construction cost, completed project, or demand measure. A later loan status is shown for evidence but does not rewrite historical approval activity.
 </details>
 
+## NYC ZAP entitlement context
+
+When New York City is selected, the ZAP panel shows a separate entitlement-stage source.
+It does not color, filter, or rank the permit queue. Use **All tracked applications** for
+the inclusive snapshot or the filed-date subset only with its displayed coverage caveat.
+Projects are joined through validated ZAP BBL associations to PLUTO parcel centroids;
+multi-lot projects count once within a cell and may appear in more than one cell, so cell
+counts must not be summed into a citywide unique-project total.
+
+The submitted panel is seeded from deterministic retained fixtures for demonstration.
+Read its snapshot retrieval, publisher date, unvalidated/orphan/unmatched/coordinate-null
+counts, and change-history disclosure before interpreting it. Missing associations are
+soft-flagged for review rather than treated as confirmed deletions. Exported ZAP packets
+carry the same limitations. Live Socrata refresh is not yet implemented.
+
 ## Exact data semantics
 
 | Field or source | What the app treats it as | What it does not establish |

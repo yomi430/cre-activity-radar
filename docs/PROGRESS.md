@@ -1,5 +1,18 @@
 # Progress
 
+## 2026-09-20 NYC ZAP foundation
+
+NYC ZAP is now a runnable, separately ranked entitlement context using deterministic
+bundled fixtures. It includes Project Data/BBL/PLUTO normalization, distinct-project and
+cell accounting, parcel-centroid H3 placement, filed-date coverage, conservative status
+mapping, snapshot history/soft-removal semantics, API routes, NYC-only UI, quality
+disclosures, and exports. Commit: `ae89bfb`.
+
+Validation passed: 33/33 Vitest tests, typecheck, production build, API smoke, focused
+Playwright, and screenshot review. The next item is live Socrata fetch/pagination,
+immutable raw snapshots/checksums, completeness validation, and an Operations refresh;
+the fixture must not be described as live current ZAP data.
+
 ## 2026-09-19 Signal Inventory and sticky map
 
 The desktop H3 map remains sticky beside the scrolling brief and returns to normal flow

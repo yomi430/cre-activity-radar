@@ -16,6 +16,13 @@ This is a product hypothesis, formed from desk research and the constraints of p
 
 It also shows SBA 504 approvals as a collapsed, experimental city-labelled context panel and evidence list. Those approvals never affect permit-cell colors, rankings, or detail evidence. The application keeps the two indicators separate because an approval has a different geography, timing, and meaning from a permit record.
 
+For NYC, the application also shows a separate ZAP entitlement context seeded from
+deterministic retained fixtures. It uses validated ZAP BBL associations and PLUTO parcel
+centroids, counts distinct projects citywide, and never changes the permit queue. Its
+all-record view is primary; the filed-date view discloses incomplete filing-date coverage.
+The bundled ZAP fixture demonstrates the integration and must not be described as a live
+or complete current ZAP snapshot. Live Socrata acquisition remains the next data task.
+
 The comparison windows are fixed for reproducibility:
 
 | Period | Dates |
