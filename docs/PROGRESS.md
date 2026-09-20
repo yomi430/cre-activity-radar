@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-09-20 interview/demo release
+
+The release narrative now starts with the analyst decision and evidence handoff, demonstrates
+the NYC property-context boundary, and explains ZAP, ACRIS, SBA, and Operations without
+blending their meanings. `INTERVIEW_PREP.md` contains the pitch, difficult questions,
+staff-level architecture decisions, exact limitations, and next steps. The demo, product
+brief, README, manual, and concise handoff were reconciled; superseded recovery instructions
+were removed from the handoff so future accounts see one current state.
+
 ## 2026-09-20 NYC property context and reported-cost controls
 
 NYC now has a bounded PLUTO-snapshot property-context enrichment joined only by canonical

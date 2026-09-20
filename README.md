@@ -4,7 +4,7 @@ CRE Activity Radar is a local prototype for a **CRE market research analyst supp
 
 Its output is an Investigation Brief for a selected area. The brief connects a fixed-window count change to its permit-type mix, current-period cadence, repeated supplied addresses, selected high reported-cost evidence, source-quality context, retained records, and recommended verification steps. It is a research triage aid, not a prediction, property valuation, investment recommendation, or demand signal.
 
-**Start with the task-oriented [product manual](docs/MANUAL.md)** for a guided tour, question index, source caveats, troubleshooting, and API examples.
+**Start with the task-oriented [product manual](docs/MANUAL.md)** for a guided tour, question index, source caveats, troubleshooting, and API examples. For the review conversation, use the concise [interview preparation guide](docs/INTERVIEW_PREP.md) and [three-minute demo](docs/DEMO.md).
 
 The working hypothesis is that analysts benefit from transparent, count-based triage before they spend time on proprietary property, leasing, or broker research. This is a product hypothesis, not a claim that users were interviewed or that the prototype has measured time savings, predictive accuracy, or causal insight.
 
@@ -82,7 +82,8 @@ Useful data commands are `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap
 
 ## Validation status
 
-All submission checks passed against the corrected full-public dataset:
+Core data, type, build, and unit checks passed against the corrected full-public dataset;
+the browser timing result is stated precisely below:
 
 ```powershell
 npm.cmd run data:seed

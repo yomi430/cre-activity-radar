@@ -1,17 +1,45 @@
-﻿# Three-minute demo script
+# Three-minute demo script
 
-**0:00–0:25 — frame the analyst job.** “A CRE research analyst has more public records than time. CRE Activity Radar turns heterogeneous city records into a traceable investigation queue. It helps decide where to investigate and preserves why; it does not call a permit a project, construction start, or investment signal.”
+**0:00–0:25 — frame the decision.** “A CRE research analyst has more public records than
+time. CRE Activity Radar turns heterogeneous municipal records into a short, traceable
+investigation queue: where should I spend the next thirty minutes, why did it surface, and
+what must I verify before I hand it to a broker?”
 
-**0:25–0:55 — focus the signal.** Keep Chicago selected and choose **Ground-up & site work**. Expand **What this lens includes**. “Each city keeps its source taxonomy. The lens is an auditable mapping with confidence and ambiguity notes, and unknown future values stay visible.”
+**0:25–0:55 — show honest discovery.** Start in Chicago. Choose **Ground-up & site work**
+and expand **What this lens includes**. “This is an auditable work-intent mapping, not a
+commercial-property classifier. Chicago property context stays unavailable because the
+retained source has no verified parcel join.” Point to the heatmap gradient and satellite
+option. “H3 is a screening bucket; color is current record count, not value or demand.”
 
-**0:55–1:25 — make geography legible.** Select the first queue result and show the same H3 selection on the street or satellite map. Point out the numeric low-to-high gradient. “Color is current record count under the active filters. H3 is a screening grid, not a parcel, neighborhood, or claim of growth.”
+**0:55–1:30 — show the commercial boundary in NYC.** Switch to NYC. Select **Likely
+commercial**, set a minimum individual estimate if useful, and rank by **Largest individual
+reported estimate**. “DOB BBL joins exactly to a PLUTO snapshot. This narrows parcel context;
+it does not prove tenancy or the permit's use. Cost is an individual applicant estimate and
+is never summed into area investment.”
 
-**1:25–2:05 — explain and validate.** Walk through Why it surfaced and Signal Profile: persistence, type concentration, repeated supplied addresses, cost coverage, and evidence. Open one retained record and its official source link. “The brief helps reject a one-month spike or duplicated-address pattern before a broker treats it as a lead. Costs stay at row level because summing permit records would overstate investment.”
+**1:30–2:10 — explain and test a lead.** Open an H3. Show its retained global scope and
+independent H3 refinement. Walk through qualification, persistence, type concentration,
+repeated addresses, cost coverage, next checks, and a source record. “The product helps an
+analyst reject weak patterns and preserve the evidence behind a viable one. It does not call
+a permit a unique project, construction start, prediction, or opportunity.”
 
-**2:05–2:35 — close the work loop.** Mark the cell **Escalate**, add a note, save it, and export HTML. “The useful output is a reproducible analyst decision and evidence packet. It can be handed to property, zoning, leasing, or broker research for the next check.”
+**2:10–2:35 — close the loop.** Set a disposition, add a note, save the lead, and export the
+evidence. Return through **Recently viewed areas** and **Signal inventory**. “Navigation
+history and deliberate leads are separate. The useful output is a reproducible analyst
+decision that can be recalled and handed to property, ownership, zoning, or broker research.”
 
-**2:35–3:00 — prove operational trust.** Open **Data Operations** and show the active dataset, source accounting, and staged refresh. “An unchanged snapshot returns up to date. Changed input is fetched, validated, rebuilt and verified in isolation, then swapped atomically. SBA is collapsed as experimental city-level context and never changes the queue.” Switch to NYC to show the shared workflow.
+**2:35–3:00 — prove breadth and operational trust.** Briefly open **NYC entitlements** and
+**Recorded deeds** to show separately sourced context that never changes permit ranking.
+Finish in **Data operations**. “Refreshes are allowlisted, staged, validated, and activated
+only after verification; unchanged source versions report up to date. Source coverage and
+failures stay visible.”
 
-If asked about differentiation: city portals publish authoritative records; this product adds a cross-source analyst workflow, auditable question-specific lenses, diagnostic briefs, saved decisions, evidence handoff, and visible pipeline health. PropertyLabs is a close comparable, so describe this as workflow differentiation rather than a unique dataset or established moat.
+If asked about differentiation: government portals remain authoritative publishers. This
+product adds the CRE-specific path from heterogeneous records to a qualified, saved,
+exportable research decision, with source semantics and pipeline health visible throughout.
+It is workflow differentiation, not a unique-data or established-moat claim.
 
-If asked what comes next: NYC ZAP is the highest-value next source because entitlement applications can appear before permits. It will be a separate NYC-only, parcel-linked layer and will not alter the permit ranking.
+If asked what comes next: validate the workflow with working analysts before adding another
+source. Then audit Chicago parcel association and sales placement; add licenses, NYC
+certificates of occupancy, or violations only as separate evidence families with explicit
+source contracts.

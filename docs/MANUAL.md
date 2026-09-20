@@ -207,7 +207,7 @@ minutes because it must acquire all current projects and BBL associations.
 | SBA `GrossApproval` | Total approved loan amount | Project cost, capital deployed, or space demand |
 | Source coordinate | Publisher-supplied map point | Exact property location |
 
-Chicago’s source excludes permits subsequently voided or revoked according to its published catalog. NYC DOB NOW Build excludes electrical, elevator, and limited alteration application datasets. The prototype leaves mixed-use and residential records visible and does not apply keyword-based commercial labels.
+Chicago’s source excludes permits subsequently voided or revoked according to its published catalog. NYC DOB NOW Build excludes electrical, elevator, and limited alteration application datasets. The default view leaves mixed-use and residential records visible and never applies keyword-based commercial labels. NYC can scope displayed records by exact-BBL PLUTO property context; that remains parcel context, not proof of permit purpose or tenancy.
 
 ## Common analytic questions
 
@@ -284,7 +284,7 @@ Invoke-RestMethod 'http://127.0.0.1:3001/api/sources?market=CHICAGO'
 
 ## What comes next
 
-For proposed extensions and their boundaries, see [DECISIONS.md](DECISIONS.md). Useful future work includes analyst observation, source-version monitoring, documented parcel enrichment where appropriate, and a deliberately designed cross-market methodology. Each requires a new validation step before it becomes a product claim.
+For proposed extensions and their boundaries, see [DECISIONS.md](DECISIONS.md). Useful future work includes analyst observation, source-version monitoring, an audited Chicago parcel association, production-scale NYC PLUTO refresh, and a deliberately designed cross-market methodology. Each requires a new validation step before it becomes a product claim.
 
 ## Product questions for reviewers
 
@@ -306,4 +306,4 @@ H3 resolution 8 is a consistent display bucket for records with usable source co
 
 ### How should value be validated?
 
-Observe analysts using the queue in real weekly reviews, compare it with their existing research path, and examine whether the briefs changed a next action without creating misleading leads. Measure repeat use, evidence inspection, lead disposition, freshness needs, and whether analysts need better property/use enrichment before adding more visualization. No such interviews or outcome measurements have been completed for this prototype.
+Observe analysts using the queue in real weekly reviews, compare it with their existing research path, and examine whether the briefs changed a next action without creating misleading leads. Measure repeat use, evidence inspection, lead disposition, freshness needs, whether NYC property context changes disposition, and whether Chicago parity is worth the source work. No such interviews or outcome measurements have been completed for this prototype.
