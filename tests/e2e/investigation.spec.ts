@@ -13,12 +13,24 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
   await expect(page.getByRole('heading', { name: 'CRE Activity Radar' })).toBeVisible();
   await expect(page.getByText('Source quality')).toBeVisible();
   await expect(page.getByLabel('Current permit count heat map legend')).toBeVisible();
+  await page.getByLabel('CRE lens').selectOption('GROUND_UP_SITE');
+  await expect(page.getByText('What this lens includes')).toBeVisible();
 
   await expect(page.getByRole('heading', { name: 'Areas worth investigating' })).toBeVisible();
   await chooseFirstArea(page);
   await expect(page.getByRole('heading', { name: 'Why it surfaced' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Signal profile' })).toBeVisible();
   await expect(page.getByText(/A concentrated pattern can be one site/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Close the investigation loop' })).toBeVisible();
+  await page.getByLabel('Disposition').selectOption('ESCALATE');
+  await page.getByLabel('Analyst note').fill('Confirm the site and hand this lead to the broker team.');
+  await page.getByRole('button', { name: 'Save to watchlist' }).click();
+  await expect(page.getByRole('button', { name: 'Update saved item' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Saved investigations' })).toBeVisible();
+  await expect(page.locator('.watchlist-items em')).toHaveText('Confirm the site and hand this lead to the broker team.');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export JSON' }).click();
+  expect((await download).suggestedFilename()).toMatch(/cre-evidence-.*\.json/);
   await page.getByRole('button', { name: 'Prior', exact: true }).click();
   await expect(page.getByText('Jul 2024–Jun 2025', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Current', exact: true }).click();
