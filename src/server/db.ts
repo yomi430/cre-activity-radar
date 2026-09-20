@@ -24,7 +24,28 @@ export function createSchema(database: DatabaseSync): void {
       lat REAL, lng REAL, h3_cell TEXT, raw_json TEXT NOT NULL, warnings_json TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS permits_market_cell_date ON permits(market, h3_cell, event_date);
+    CREATE INDEX IF NOT EXISTS permits_market_cell_date_cost_address ON permits(market, h3_cell, event_date, reported_cost_cents, address);
     CREATE INDEX IF NOT EXISTS permits_market_type_date ON permits(market, permit_type, event_date);
+    CREATE INDEX IF NOT EXISTS permits_market_date_cell ON permits(market, event_date, h3_cell);
+    -- Property use is deliberately a separate, immutable enrichment. Permit rows
+    -- retain source identity and source-coordinate placement regardless of join outcome.
+    CREATE TABLE IF NOT EXISTS property_use_snapshots (
+      snapshot_id TEXT PRIMARY KEY, permit_snapshot_sha256 TEXT NOT NULL, pluto_rows_updated_at TEXT,
+      retrieved_at TEXT NOT NULL, manifest_json TEXT NOT NULL, complete INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS pluto_property_use_parcels (
+      snapshot_id TEXT NOT NULL, bbl TEXT NOT NULL, landuse_raw TEXT, bldgclass_raw TEXT,
+      unitsres_raw TEXT, unitstotal_raw TEXT, borough_raw TEXT, block_raw TEXT, lot_raw TEXT,
+      latitude_raw TEXT, longitude_raw TEXT, raw_json TEXT NOT NULL,
+      PRIMARY KEY(snapshot_id, bbl), FOREIGN KEY(snapshot_id) REFERENCES property_use_snapshots(snapshot_id)
+    );
+    CREATE TABLE IF NOT EXISTS permit_property_use (
+      permit_id TEXT NOT NULL, snapshot_id TEXT, canonical_bbl TEXT, category TEXT NOT NULL,
+      provenance TEXT NOT NULL, confidence TEXT NOT NULL, reason TEXT, landuse_raw TEXT, bldgclass_raw TEXT,
+      PRIMARY KEY(permit_id), FOREIGN KEY(permit_id) REFERENCES permits(id),
+      FOREIGN KEY(snapshot_id) REFERENCES property_use_snapshots(snapshot_id)
+    );
+    CREATE INDEX IF NOT EXISTS permit_property_use_category ON permit_property_use(category, permit_id);
     CREATE TABLE IF NOT EXISTS approvals (
       id TEXT PRIMARY KEY, market TEXT NOT NULL, event_date TEXT NOT NULL, borrower_name TEXT, approval_amount_cents INTEGER NOT NULL,
       loan_status TEXT, city TEXT NOT NULL, state TEXT NOT NULL, raw_json TEXT NOT NULL

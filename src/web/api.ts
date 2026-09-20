@@ -1,4 +1,4 @@
-import type { AcrisCellCount, AcrisDocumentEvidence, AcrisSummaryData, AdminJobAction, ApiResponse, ApprovalEvidence, CellSignal, CellsData, LensId, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData, ZapCellCount, ZapSummaryData, ZapWindow } from '../shared/contracts';
+import type { AcrisCellCount, AcrisDocumentEvidence, AcrisSummaryData, AdminJobAction, ApiResponse, ApprovalEvidence, CellSignal, CellsData, LensId, Market, PermitEvidence, PropertyUse, RecordDetail, SourceReport, SummaryData, ZapCellCount, ZapSummaryData, ZapWindow } from '../shared/contracts';
 
 export type RecordedDeedCell = AcrisCellCount & { associationCount: number };
 export type RecordedDeedSummary = AcrisSummaryData & {
@@ -10,7 +10,12 @@ export type RecordedDeedSummary = AcrisSummaryData & {
   associationCount: number;
 };
 
-const qs = (values: Record<string, string | number>) => new URLSearchParams(Object.entries(values).map(([key, value]) => [key, String(value)])).toString();
+export type { PropertyUse };
+export type QueueRank = 'RECORDED_CHANGE' | 'CURRENT_RECORDS' | 'LARGEST_REPORTED_COST';
+export type PermitQuery = { propertyUse: PropertyUse; minReportedCostCents: number; rank: QueueRank };
+
+const qs = (values: Record<string, string | number | null | undefined>) => new URLSearchParams(Object.entries(values).filter(([, value]) => value !== null && value !== undefined).map(([key, value]) => [key, String(value)])).toString();
+const permitQuery = (market: Market, permitType: string, lens: LensId, filters: PermitQuery) => ({ market, permitType, lens, propertyUse: filters.propertyUse, rank: filters.rank, minReportedCostCents: filters.minReportedCostCents > 0 ? filters.minReportedCostCents : undefined });
 async function get<T>(url: string, signal?: AbortSignal): Promise<ApiResponse<T>> {
   const response = await fetch(url, { signal });
   if (!response.ok) { let message = `Request failed (${response.status})`; try { message = (await response.json()).error?.message ?? message; } catch {} throw new Error(message); }
@@ -22,11 +27,11 @@ async function post<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
   return response.json() as Promise<ApiResponse<T>>;
 }
 export const api = {
-  summary: (market: Market, permitType: string, lens: LensId, signal?: AbortSignal) => get<SummaryData>(`/api/summary?${qs({ market, permitType, lens })}`, signal),
-  cells: (market: Market, permitType: string, lens: LensId, signal?: AbortSignal) => get<CellsData>(`/api/cells?${qs({ market, permitType, lens })}`, signal),
-  cell: (market: Market, cell: string, permitType: string, lens: LensId, signal?: AbortSignal) => get<CellSignal>(`/api/cells/${encodeURIComponent(cell)}?${qs({ market, permitType, lens })}`, signal),
-  brief: (market: Market, cell: string, permitType: string, lens: LensId, signal?: AbortSignal) => get<unknown>(`/api/cells/${encodeURIComponent(cell)}/brief?${qs({ market, permitType, lens })}`, signal),
-  evidence: (market: Market, cell: string, permitType: string, lens: LensId, period: 'current' | 'prior', offset: number, signal?: AbortSignal) => get<PermitEvidence[]>(`/api/cells/${encodeURIComponent(cell)}/evidence?${qs({ market, permitType, lens, period, offset, limit: 25 })}`, signal),
+  summary: (market: Market, permitType: string, lens: LensId, filters: PermitQuery, signal?: AbortSignal) => get<SummaryData>(`/api/summary?${qs(permitQuery(market, permitType, lens, filters))}`, signal),
+  cells: (market: Market, permitType: string, lens: LensId, filters: PermitQuery, signal?: AbortSignal) => get<CellsData>(`/api/cells?${qs(permitQuery(market, permitType, lens, filters))}`, signal),
+  cell: (market: Market, cell: string, permitType: string, lens: LensId, filters: PermitQuery, signal?: AbortSignal) => get<CellSignal>(`/api/cells/${encodeURIComponent(cell)}?${qs(permitQuery(market, permitType, lens, filters))}`, signal),
+  brief: (market: Market, cell: string, permitType: string, lens: LensId, filters: PermitQuery, signal?: AbortSignal) => get<unknown>(`/api/cells/${encodeURIComponent(cell)}/brief?${qs(permitQuery(market, permitType, lens, filters))}`, signal),
+  evidence: (market: Market, cell: string, permitType: string, lens: LensId, filters: PermitQuery, period: 'current' | 'prior', offset: number, signal?: AbortSignal) => get<PermitEvidence[]>(`/api/cells/${encodeURIComponent(cell)}/evidence?${qs({ ...permitQuery(market, permitType, lens, filters), period, offset, limit: 25 })}`, signal),
   approvals: (market: Market, signal?: AbortSignal) => get<ApprovalEvidence[]>(`/api/approvals?${qs({ market, period: 'current', offset: 0, limit: 25 })}`, signal),
   record: (id: string, signal?: AbortSignal) => get<RecordDetail>(`/api/records/${encodeURIComponent(id)}`, signal),
   sources: (market: Market, signal?: AbortSignal) => get<SourceReport[]>(`/api/sources?${qs({ market })}`, signal),

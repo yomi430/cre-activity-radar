@@ -82,10 +82,28 @@ export interface ZapSummaryData {
 export const lensIds = ['ALL', 'GROUND_UP_SITE', 'REINVESTMENT', 'BUILDING_SYSTEMS', 'TEMPORARY_LOGISTICS', 'SIGNAGE', 'ADMIN_LOW_INFORMATION', 'UNCLASSIFIED'] as const;
 export const lensIdSchema = z.enum(lensIds);
 export type LensId = z.infer<typeof lensIdSchema>;
+/** Property use is parcel context, not a claim about the permit's work or tenancy. */
+export const propertyUseIds = ['ALL', 'LIKELY_COMMERCIAL', 'MULTIFAMILY', 'MIXED_USE', 'RESIDENTIAL', 'UNKNOWN'] as const;
+export const propertyUseSchema = z.enum(propertyUseIds);
+export type PropertyUse = z.infer<typeof propertyUseSchema>;
+export const rankIds = ['RECORDED_CHANGE', 'CURRENT_RECORDS', 'LARGEST_REPORTED_COST'] as const;
+export const rankSchema = z.enum(rankIds);
+export type Rank = z.infer<typeof rankSchema>;
+export interface PropertyUseEvidence {
+  category: Exclude<PropertyUse, 'ALL'>;
+  provenance: 'PLUTO_LANDUSE_DIRECT' | 'CHICAGO_UNAVAILABLE';
+  confidence: 'HIGH' | 'NONE';
+  reason: string | null;
+  canonicalBbl: string | null;
+  landuseRaw: string | null;
+  bldgclassRaw: string | null;
+  snapshotId: string | null;
+  classifiedAsOf: string | null;
+}
 export interface LensDefinition { id: LensId; label: string; rankingTreatment: 'ALL_RECORDS' | 'PRIMARY' | 'DEPRIORITIZED'; description: string; }
 export interface LensClassification { lens: Exclude<LensId, 'ALL'>; confidence: 'HIGH' | 'MEDIUM' | 'LOW'; ambiguity: string; officialSourceUrl: string; rawPermitType: string; rawWorkType: string | null; }
 export interface LensMapping extends LensClassification { market: Market; }
-export interface LensSelection { permitType: string; lens: LensId; defaultTreatment: 'ALL_RECORDS_WITH_DEPRIORITIZATION'; noCompositeScore: true; }
+export interface LensSelection { permitType: string; lens: LensId; propertyUse: PropertyUse; minReportedCostCents: number | null; rank: Rank; defaultTreatment: 'ALL_RECORDS_WITH_DEPRIORITIZATION'; noCompositeScore: true; }
 export interface ApiResponse<T> {
   datasetId: string;
   market?: Market;
@@ -110,6 +128,9 @@ export interface CellSignal {
   permitCount: Change;
   monthly: Array<{ month: string; count: number }>;
   lowVolume: boolean;
+  /** Maximum one-record applicant-reported cost; never a summed investment amount. */
+  largestReportedCostCents: number | null;
+  currentReportedCost: { withReportedCost: number; missingReportedCost: number; coverageShare: number | null };
 }
 export interface CellsData {
   cells: CellSignal[];
@@ -172,6 +193,7 @@ export interface PermitEvidence {
   permitNumber: string | null;
   permitType: string;
   lens: LensClassification;
+  propertyUse: PropertyUseEvidence;
   address: string | null;
   description: string | null;
   reportedCostCents: number | null;
@@ -304,6 +326,9 @@ export interface InvestigationBrief {
   h3Cell: string;
   permitType: string;
   lens: LensId;
+  propertyUse: PropertyUse;
+  minReportedCostCents: number | null;
+  rank: Rank;
   selection: LensSelection;
   label: string;
   windows: Windows;

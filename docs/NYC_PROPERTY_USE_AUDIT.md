@@ -49,7 +49,10 @@ Direct `landuse` takes precedence whenever it is a valid DCP code. Values 7–11
 | `LIKELY_COMMERCIAL` | `5`, `6` | `PLUTO_LANDUSE_DIRECT` / `HIGH`; commercial/office or industrial/manufacturing. “Likely” remains necessary because this is parcel context, not tenancy or work use. |
 | `UNKNOWN` | Missing, invalid, unmatched, `7`–`11`, or future value | Include reason; do not guess. |
 
-`BldgClass` is retained for evidence. It may be used only when `landuse` is missing, through an explicit versioned transcription of Appendix D in the active PLUTO data dictionary; this is a documented fallback, not a heuristic. Its provenance is `PLUTO_BLDGCLASS_APPENDIX_D` and confidence `MEDIUM`.
+`BldgClass` is retained for evidence. The initial implementation does not classify from it:
+missing or unsupported `landuse` remains `UNKNOWN`. A later fallback would require an
+explicit versioned transcription of Appendix D, separate tests, provenance, and coverage
+accounting; it must not be inferred ad hoc.
 
 | Fallback target | Appendix D class groups |
 | --- | --- |

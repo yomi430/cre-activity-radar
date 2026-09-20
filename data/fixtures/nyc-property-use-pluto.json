@@ -1,0 +1,10 @@
+[
+  {"bbl":"1015090069.00000000","landuse":"5","bldgclass":"O4","unitsres":"0","unitstotal":"1","borough":"MN","block":"1509","lot":"69"},
+  {"bbl":"4019740012","landuse":"4","bldgclass":"S5","unitsres":"8","unitstotal":"9","borough":"QN","block":"1974","lot":"12"},
+  {"bbl":"1012800090","landuse":"5","bldgclass":"O4","unitsres":"0","unitstotal":"1","borough":"MN","block":"1280","lot":"90"},
+  {"bbl":"4104960038","landuse":"1","bldgclass":"A5","unitsres":"1","unitstotal":"1","borough":"QN","block":"10496","lot":"38"},
+  {"bbl":"3051140001","landuse":"2","bldgclass":"C1","unitsres":"4","unitstotal":"4","borough":"BK","block":"5114","lot":"1"},
+  {"bbl":"3061550108","landuse":"3","bldgclass":"D1","unitsres":"20","unitstotal":"20","borough":"BK","block":"6155","lot":"108"},
+  {"bbl":"1006030001","landuse":"6","bldgclass":"E1","unitsres":"0","unitstotal":"1","borough":"MN","block":"603","lot":"1"},
+  {"bbl":"1011560030","landuse":"8","bldgclass":"P1","unitsres":"0","unitstotal":"1","borough":"MN","block":"1156","lot":"30"}
+]

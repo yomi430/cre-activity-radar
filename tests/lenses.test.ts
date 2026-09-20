@@ -37,7 +37,7 @@ describe('auditable CRE lenses', () => {
     const summary = summaryFor(value, 'CHICAGO', 'ALL', 'REINVESTMENT');
     expect(summary.acceptedPermits.current).toBe(1);
     expect(summary.lensMappings).toContainEqual(expect.objectContaining({ rawPermitType: express, rawWorkType: 'Porch,Deck,Balcony,or Fire Escape', lens: 'REINVESTMENT' }));
-    expect(summary.selection).toEqual({ permitType: 'ALL', lens: 'REINVESTMENT', defaultTreatment: 'ALL_RECORDS_WITH_DEPRIORITIZATION', noCompositeScore: true });
+    expect(summary.selection).toEqual({ permitType: 'ALL', lens: 'REINVESTMENT', propertyUse: 'ALL', minReportedCostCents: null, rank: 'RECORDED_CHANGE', defaultTreatment: 'ALL_RECORDS_WITH_DEPRIORITIZATION', noCompositeScore: true });
     expect(cellsFor(value, 'CHICAGO', 'ALL', 'REINVESTMENT').cells[0]?.permitCount.current).toBe(1);
     expect(investigationBriefFor(value, 'CHICAGO', cell, 'ALL', 'REINVESTMENT')?.permitCount.current).toBe(1);
     const evidence = evidenceFor(value, 'CHICAGO', cell, 'ALL', 'current', 25, 0, 'REINVESTMENT');

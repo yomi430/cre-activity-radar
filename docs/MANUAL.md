@@ -86,6 +86,14 @@ The area list and map share the same market, permit-type filter, and low-volume 
 
 - **Largest increase:** current count minus prior count, descending; then current count.
 - **Current count:** current-window count, descending.
+- **Largest individual reported estimate:** the highest current record-level applicant estimate in the H3, with current count as the tie-breaker. It is not an area total.
+
+In NYC, **Property context** applies an exact BBL join to the bundled PLUTO snapshot. The
+categories describe the tax lot in that snapshot; they do not prove current tenancy or the
+permit work's use. `Unknown` keeps missing, invalid, unmatched, and unsupported source cases
+visible. Chicago shows this control as unavailable because no equivalent audited join exists.
+The minimum-estimate control compares individual records and excludes missing values; zero
+means no cost filter.
 
 The default list excludes an area whose combined current and prior count is below five. This is a visible prototype triage threshold, not statistical significance. Use **Show low-volume areas** to include them. If a control causes the selected area to disappear, the app clears the selection rather than showing mismatched detail.
 
@@ -99,7 +107,7 @@ H3 is the geographic grid used to group permits with usable publisher coordinate
 
 **CRE lens** groups exact publisher categories into research intents. These are product mappings, not official classifications or proof of an asset class. Expand the mapping panel to see raw values, confidence, ambiguity, and source. Unknown future values remain visible under `UNCLASSIFIED`. Lens and exact permit-type filters intersect; `ALL` removes that level of filtering.
 
-**Permit type** uses the exact source type labels available in the selected market. It filters the summary, map, ranked list, detail, and evidence together. It does not classify records as commercial, residential, or a particular asset class.
+**Permit type** uses the exact source type labels available in the selected market. It filters the summary, map, ranked list, detail, and evidence together. It does not classify records as commercial, residential, or a particular asset class; NYC property context is a separate PLUTO-snapshot dimension.
 
 For a selected cell, absolute change is `current − prior`. When the prior count is greater than zero, the app calculates `(current − prior) / prior × 100` and rounds only for display. A prior count of zero and a positive current count displays **New activity**, without an invented infinite percentage. Both periods at zero display **No baseline**. A partial source displays **Comparison unavailable** because a sample cannot support a full-period growth ranking.
 

@@ -1,5 +1,16 @@
 # Progress
 
+## 2026-09-20 NYC property context and reported-cost controls
+
+NYC now has a bounded PLUTO-snapshot property-context enrichment joined only by canonical
+DOB BBL and classified from direct `landuse` values. It is independent of the work-intent
+lenses and preserves unsupported/unmatched records as `UNKNOWN`. Chicago displays the
+control as unavailable because no audited parcel association exists. Global and H3-local
+filters, ranking, minimum individual estimate, evidence, saved leads, recent history, URL
+state, and exports preserve the selection. Applicant estimates remain individual evidence
+and are never aggregated into investment. Validation passed 62/62 Vitest tests, typecheck,
+production build, the focused Playwright workflow, and visual screenshot inspection.
+
 ## 2026-09-20 NYC ACRIS recorded-deed evidence
 
 The bounded four-borough ACRIS recorded-deed evidence family is implemented. It uses exact
