@@ -1,5 +1,18 @@
 # Progress
 
+## 2026-09-20 NYC ZAP live refresh
+
+The official NYC ZAP acquisition path is implemented in `767e96b`, with safeguard tests
+in `8c2f7e7` and `4000dad`. Data Operations now exposes an allowlisted **Refresh NYC ZAP**
+job. It polls Socrata metadata, paginates Project Data and BBL rows, scopes PLUTO requests
+to referenced BBLs, validates completeness, writes immutable checksummed snapshots, and
+rebuilds before atomically advancing the active pointer. Retained complete snapshots replay
+in order, while unactivated snapshots left by a failed rebuild remain excluded. Full local
+validation passed: 40/40 Vitest tests, typecheck, production build, and 8/8 Playwright tests.
+The live network download remains operational validation; the deterministic no-network
+suite covers partial responses, checksum corruption, failed rebuild/retry, idempotence,
+history replay, and soft-removal semantics.
+
 ## 2026-09-20 NYC ZAP foundation
 
 NYC ZAP is now a runnable, separately ranked entitlement context using deterministic

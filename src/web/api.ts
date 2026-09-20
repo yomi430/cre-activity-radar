@@ -24,5 +24,5 @@ export const api = {
   zapSummary: (window: ZapWindow, signal?: AbortSignal) => get<ZapSummaryData>(`/api/zap/summary?${qs({ window })}`, signal),
   zapCells: (window: ZapWindow, signal?: AbortSignal) => get<ZapCellCount[]>(`/api/zap/cells?${qs({ window })}`, signal)
   ,pipeline: (signal?: AbortSignal) => get<unknown>('/api/admin/pipeline', signal)
-  ,runJob: (action: 'REFRESH_CHICAGO' | 'REFRESH_NYC' | 'REFRESH_SBA' | 'REBUILD_DATABASE' | 'VERIFY_DATASET') => post<unknown>('/api/admin/jobs', { action })
+  ,runJob: (action: 'REFRESH_CHICAGO' | 'REFRESH_NYC' | 'REFRESH_ZAP' | 'REFRESH_SBA' | 'REBUILD_DATABASE' | 'VERIFY_DATASET') => post<unknown>('/api/admin/jobs', { action })
 };

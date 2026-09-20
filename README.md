@@ -16,12 +16,15 @@ This is a product hypothesis, formed from desk research and the constraints of p
 
 It also shows SBA 504 approvals as a collapsed, experimental city-labelled context panel and evidence list. Those approvals never affect permit-cell colors, rankings, or detail evidence. The application keeps the two indicators separate because an approval has a different geography, timing, and meaning from a permit record.
 
-For NYC, the application also shows a separate ZAP entitlement context seeded from
-deterministic retained fixtures. It uses validated ZAP BBL associations and PLUTO parcel
+For NYC, the application also shows a separate ZAP entitlement context. A clean checkout
+uses deterministic retained fixtures; **Refresh NYC ZAP** or `npm.cmd run data:fetch:zap`
+acquires the official current Socrata snapshots. It uses validated ZAP BBL associations and PLUTO parcel
 centroids, counts distinct projects citywide, and never changes the permit queue. Its
 all-record view is primary; the filed-date view discloses incomplete filing-date coverage.
 The bundled ZAP fixture demonstrates the integration and must not be described as a live
-or complete current ZAP snapshot. Live Socrata acquisition remains the next data task.
+or complete current ZAP snapshot. Live acquisition writes immutable checksummed snapshots,
+validates row completeness, rebuilds an isolated database, and advances the active pointer
+only after success. An unchanged publisher version returns `UP_TO_DATE` without rebuilding.
 
 The comparison windows are fixed for reproducibility:
 
@@ -68,7 +71,7 @@ For a built local demo:
 npm.cmd run demo
 ```
 
-Useful data commands are `data:fetch:chicago`, `data:fetch:nyc`, `data:bundle-demo`, `data:seed`, and `data:verify`. Permit fetches query the fixed windows, freeze selected source fields, and reconcile source counts before keeping a snapshot. `data:fetch:sba` remains an explicit source-acquisition task; the verified SBA CSV may instead be supplied under `data/raw/` and is then ingested as borrower-city context. No normal app command fetches from a third-party API.
+Useful data commands are `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap`, `data:bundle-demo`, `data:seed`, and `data:verify`. Permit fetches query the fixed windows, freeze selected source fields, and reconcile source counts before keeping a snapshot. The ZAP fetch polls official NYC metadata, pages Project Data and BBL associations, fetches only referenced PLUTO parcels, and preserves retained snapshots for cautious change detection. `data:fetch:sba` remains an explicit source-acquisition task; the verified SBA CSV may instead be supplied under `data/raw/` and is then ingested as borrower-city context.
 
 ## Validation status
 
@@ -83,7 +86,7 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 25 tests across six files, including qualified-signal boundaries, lens coverage and fallback, refresh idempotence and stages, persisted jobs, investigation briefs, and normalization. API smoke passed for both markets; it reported Chicago current/prior permit totals of 31,555/31,927 and NYC totals of 168,852/166,122. These are source-record counts for the stated datasets, not findings about project starts or investment. Playwright passed all eight workflows, including two-city desktop investigation, persistent H3 drill-down, URL/recent-history restoration, zero-match recovery, mobile, Signal Inventory park/filter/export/recall/remove, and Data Operations. Desktop and mobile screenshots were visually inspected.
+The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 40 tests across nine files, including ZAP pagination, checksum and history safeguards, qualified-signal boundaries, lens coverage and fallback, refresh idempotence and stages, persisted jobs, investigation briefs, and normalization. API smoke passed for both markets; it reported Chicago current/prior permit totals of 31,555/31,927 and NYC totals of 168,852/166,122. These are source-record counts for the stated datasets, not findings about project starts or investment. Playwright passed all eight workflows, including two-city desktop investigation, persistent H3 drill-down, URL/recent-history restoration, zero-match recovery, mobile, Signal Inventory park/filter/export/recall/remove, and Data Operations. Desktop and mobile screenshots were visually inspected.
 
 ## Sources and further reading
 

@@ -69,6 +69,7 @@ test('opens data operations and reports the seeded pipeline', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Source status and accounting' })).toBeVisible();
   await expect(page.getByText('CHICAGO', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('NYC', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Refresh NYC ZAP' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Verify dataset' })).toBeEnabled();
   await page.screenshot({ path: 'test-results/data-operations.png', fullPage: true });
 });

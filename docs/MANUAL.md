@@ -158,7 +158,15 @@ The submitted panel is seeded from deterministic retained fixtures for demonstra
 Read its snapshot retrieval, publisher date, unvalidated/orphan/unmatched/coordinate-null
 counts, and change-history disclosure before interpreting it. Missing associations are
 soft-flagged for review rather than treated as confirmed deletions. Exported ZAP packets
-carry the same limitations. Live Socrata refresh is not yet implemented.
+carry the same limitations.
+
+Use **Data Operations → Refresh NYC ZAP** to check the official Project Data, ZAP BBL,
+and PLUTO sources. If their publisher metadata matches the active snapshot, the job reports
+`UP_TO_DATE`. Otherwise it downloads selected fields with defensive pagination, verifies
+counts and checksums, rebuilds against the staged snapshot, and activates it only after the
+database swap succeeds. Retained complete snapshots are replayed in order so change-history
+and `POSSIBLY_REMOVED` accounting survive a rebuild. The first live run can take several
+minutes because it must acquire all current projects and BBL associations.
 
 ## Exact data semantics
 
