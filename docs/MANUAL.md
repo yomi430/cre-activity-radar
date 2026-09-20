@@ -109,9 +109,9 @@ The area detail gives 24 zero-filled monthly permit counts and separates Current
 
 This is evidence for a recorded permit event in the grid area, not proof of a construction start, completion, unique project, tenant decision, or investment thesis.
 
-## Analyst decision, watchlist, and export
+## Analyst decision, Signal Inventory, and export
 
-For a selected area, choose **Investigate**, **Monitor**, **Dismiss**, or **Escalate**, write a note, and save it. The saved investigation records the dataset, market, H3 cell, permit type, lens, and timestamp; selecting it restores that view. Saves live in the current browser only. **Export JSON** creates a structured evidence packet and **Export HTML** creates a readable handoff with the brief, decision, evidence, source links, and caveats.
+For a selected area, choose **Investigate**, **Monitor**, **Dismiss**, or **Escalate**, write a note, and park it in the Signal Inventory. The inventory records the dataset, market, H3 cell, permit type, lens, qualified pattern, captured counts, next checks, and timestamp; selecting it restores that view. Filter parked leads by market, status, or pattern, or remove them. **Export JSON** and **Export HTML** on the brief create a single-lead evidence packet. The inventory exports either structured JSON or a readable portfolio report with status totals and potential areas to explore. Saves live in the current browser only and older-dataset entries are labelled for recomputation.
 
 ## Data Operations
 

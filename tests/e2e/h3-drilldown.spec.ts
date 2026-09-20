@@ -16,6 +16,7 @@ test.describe('persistent H3 drill-down', () => {
 
   test('keeps the H3 anchor and global discovery results while local scope changes', async ({ page }) => {
     await openFirstH3(page);
+    await expect(page.locator('.map-panel')).toHaveCSS('position', 'sticky');
     const selected = page.getByLabel('Selected H3 cell');
     const selectedId = await selected.textContent();
     const queueBefore = (await page.locator('.finding').allInnerTexts()).join('|');
@@ -50,7 +51,7 @@ test.describe('persistent H3 drill-down', () => {
     await expect(page.getByRole('button', { name: 'Resume last investigation' })).toBeVisible();
     await page.getByRole('button', { name: 'Clear history' }).click();
     await expect(page.getByText('No recently viewed areas.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Saved investigations' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Signal inventory' })).toBeVisible();
   });
 
   test('renders the qualified signal and local controls on mobile', async ({ page }) => {
@@ -59,5 +60,24 @@ test.describe('persistent H3 drill-down', () => {
     await expect(page.getByText(/Deterministic research qualification/)).toBeVisible();
     await expect(page.getByLabel('H3 CRE lens')).toBeVisible();
     await page.screenshot({ path: 'test-results/h3-drilldown-mobile.png', fullPage: true });
+  });
+
+  test('parks, filters, exports, recalls, and removes a qualified lead', async ({ page }) => {
+    await openFirstH3(page);
+    const selected = await page.getByLabel('Selected H3 cell').textContent();
+    await page.getByLabel('Disposition').selectOption('MONITOR');
+    await page.getByLabel('Analyst note').fill('Recheck this lead after the next publisher refresh.');
+    await page.getByRole('button', { name: 'Save to watchlist' }).click();
+    const inventory = page.getByRole('region', { name: 'Signal inventory' });
+    await expect(inventory).toContainText('Recheck this lead after the next publisher refresh.');
+    await page.getByLabel('Inventory status').selectOption('MONITOR');
+    await expect(inventory.locator('.lead-card')).toHaveCount(1);
+    const report = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export portfolio report' }).click();
+    expect((await report).suggestedFilename()).toMatch(/cre-signal-inventory-.*\.html/);
+    await inventory.locator('.lead-open').click();
+    await expect(page.getByLabel('Selected H3 cell')).toHaveText(selected ?? '');
+    await inventory.getByRole('button', { name: /Remove parked lead/ }).click();
+    await expect(inventory).toContainText('No parked leads yet.');
   });
 });

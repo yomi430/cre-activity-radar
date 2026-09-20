@@ -26,8 +26,8 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
   await page.getByLabel('Analyst note').fill('Confirm the site and hand this lead to the broker team.');
   await page.getByRole('button', { name: 'Save to watchlist' }).click();
   await expect(page.getByRole('button', { name: 'Update saved item' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Saved investigations' })).toBeVisible();
-  await expect(page.locator('.watchlist-items em')).toHaveText('Confirm the site and hand this lead to the broker team.');
+  await expect(page.getByRole('heading', { name: 'Signal inventory' })).toBeVisible();
+  await expect(page.locator('.signal-inventory em')).toHaveText('Confirm the site and hand this lead to the broker team.');
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export JSON' }).click();
   expect((await download).suggestedFilename()).toMatch(/cre-evidence-.*\.json/);
@@ -42,7 +42,7 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
   await page.getByRole('button', { name: 'Close' }).click();
   await page.screenshot({ path: 'test-results/chicago-desktop.png', fullPage: true });
 
-  await page.getByLabel('Market').selectOption('NYC');
+  await page.locator('.market-select select').selectOption('NYC');
   await expect(page.locator('.finding').first()).toBeVisible();
   await chooseFirstArea(page);
   await expect(page.locator('.brief-title h2')).toBeVisible();

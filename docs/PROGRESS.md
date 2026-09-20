@@ -1,5 +1,17 @@
 # Progress
 
+## 2026-09-19 Signal Inventory and sticky map
+
+The desktop H3 map remains sticky beside the scrolling brief and returns to normal flow
+on tablet/mobile. Analyst-saved work is now a Signal Inventory rather than a simple
+watchlist: park, filter, recall, remove, identify older-snapshot context, and export JSON
+or an HTML portfolio report. The discovery queue remains permit-based and does not
+automatically create leads. Additional-source research is reviewed in
+`PERPLEXITY_SIGNAL_RESEARCH.md`.
+
+Current validation: 25/25 Vitest tests, 8/8 Playwright workflows, typecheck, production
+build, and desktop/mobile visual inspection passed.
+
 ## 2026-09-19 H3 investigation workflow
 
 Implemented global discovery filters and independent selected-H3 drill-down filters,
