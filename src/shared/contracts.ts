@@ -17,6 +17,7 @@ export const lensIdSchema = z.enum(lensIds);
 export type LensId = z.infer<typeof lensIdSchema>;
 export interface LensDefinition { id: LensId; label: string; rankingTreatment: 'ALL_RECORDS' | 'PRIMARY' | 'DEPRIORITIZED'; description: string; }
 export interface LensClassification { lens: Exclude<LensId, 'ALL'>; confidence: 'HIGH' | 'MEDIUM' | 'LOW'; ambiguity: string; officialSourceUrl: string; rawPermitType: string; rawWorkType: string | null; }
+export interface LensMapping extends LensClassification { market: Market; }
 export interface LensSelection { permitType: string; lens: LensId; defaultTreatment: 'ALL_RECORDS_WITH_DEPRIORITIZATION'; noCompositeScore: true; }
 export interface ApiResponse<T> {
   datasetId: string;
@@ -88,6 +89,7 @@ export interface SummaryData {
   comparable: boolean;
   permitTypes: string[];
   lenses: LensDefinition[];
+  lensMappings: LensMapping[];
   selection: LensSelection;
   acceptedPermits: Change;
   mappedPermits: Change;

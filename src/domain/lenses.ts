@@ -1,4 +1,4 @@
-import type { LensClassification, LensDefinition, LensId, Market } from '../shared/contracts.js';
+import type { LensClassification, LensDefinition, LensId, LensMapping, Market } from '../shared/contracts.js';
 
 type Mapping = Omit<LensClassification, 'rawPermitType' | 'rawWorkType'> & { market: Market; permitType: string; workType?: string };
 
@@ -98,3 +98,9 @@ export function lensWhere(market: Market, lens: LensId): SqlFilter {
 }
 
 export function lensDefinition(id: LensId): LensDefinition { return LENS_DEFINITIONS.find(item => item.id === id)!; }
+export function mappingsForMarket(market: Market): LensMapping[] {
+  return LENS_MAPPINGS.filter(item => item.market === market).map(item => ({
+    market, lens: item.lens, confidence: item.confidence, ambiguity: item.ambiguity, officialSourceUrl: item.officialSourceUrl,
+    rawPermitType: item.permitType, rawWorkType: item.workType ?? null,
+  }));
+}

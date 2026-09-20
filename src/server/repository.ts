@@ -4,7 +4,7 @@ import { change } from '../domain/change.js';
 import { months, WINDOWS } from '../domain/dates.js';
 import { persistenceForCurrent, sortDrivers, surfacedNarrative } from '../domain/investigation.js';
 import { polygonFor } from '../domain/spatial.js';
-import { classifyPermit, LENS_DEFINITIONS, lensWhere } from '../domain/lenses.js';
+import { classifyPermit, LENS_DEFINITIONS, lensWhere, mappingsForMarket } from '../domain/lenses.js';
 
 type PermitRow = { id: string; market: Market; source: 'CHICAGO_PERMIT' | 'NYC_DOB_NOW'; event_date: string; permit_number: string | null; permit_type: string; reported_cost_cents: number | null; address: string | null; description: string | null; h3_cell: string | null; lat: number | null; lng: number | null; warnings_json: string; raw_json: string };
 const dates = [WINDOWS.prior.start, WINDOWS.prior.endExclusive, WINDOWS.current.start, WINDOWS.current.endExclusive];
@@ -24,7 +24,7 @@ export function reportsFor(db: DatabaseSync, market: Market): SourceReport[] { r
 export function summaryFor(db: DatabaseSync, market: Market, permitType: string, lens: LensId = 'ALL'): SummaryData {
   const typeRows = db.prepare('SELECT DISTINCT permit_type FROM permits WHERE market = ? ORDER BY permit_type').all(market) as Array<{ permit_type: string }>;
   const sourceReports = reportsFor(db, market); const approval = sbaFor(db, market);
-  return { market, mode: sourceReports.some(r => r.mode === 'public') ? 'public' : 'synthetic', windows: WINDOWS, comparable: comparable(db, market), permitTypes: typeRows.map(x => x.permit_type), lenses: [...LENS_DEFINITIONS], selection: selection(permitType, lens), acceptedPermits: countChange(db, market, permitType, lens, null), mappedPermits: countChange(db, market, permitType, lens, true), unmappedPermits: countChange(db, market, permitType, lens, false), sources: sourceReports, sba: approval };
+  return { market, mode: sourceReports.some(r => r.mode === 'public') ? 'public' : 'synthetic', windows: WINDOWS, comparable: comparable(db, market), permitTypes: typeRows.map(x => x.permit_type), lenses: [...LENS_DEFINITIONS], lensMappings: mappingsForMarket(market), selection: selection(permitType, lens), acceptedPermits: countChange(db, market, permitType, lens, null), mappedPermits: countChange(db, market, permitType, lens, true), unmappedPermits: countChange(db, market, permitType, lens, false), sources: sourceReports, sba: approval };
 }
 export function cellsFor(db: DatabaseSync, market: Market, permitType: string, lens: LensId = 'ALL') {
   const filter = filterWhere(market, permitType, lens); const rows = db.prepare(`SELECT h3_cell, MIN(address) AS address, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current FROM permits WHERE market = ? AND h3_cell IS NOT NULL${filter.clause} GROUP BY h3_cell HAVING prior > 0 OR current > 0 ORDER BY current DESC, h3_cell`).all(dates[0], dates[1], dates[2], dates[3], market, ...filter.params) as Array<{ h3_cell: string; address: string | null; prior: number; current: number }>;
