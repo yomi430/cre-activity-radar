@@ -1,5 +1,23 @@
 # Progress
 
+## 2026-09-19 final value workflow
+
+The planned release is complete except for the separately deferred NYC ZAP entitlement
+layer. Auditable permit lenses now filter the Chicago and NYC queue, map, brief, and
+evidence with explicit confidence, ambiguity, raw mappings, and `UNCLASSIFIED`
+coverage. The investigation loop now includes dispositions, notes, a browser-local
+watchlist, restored selections, and JSON/HTML evidence export. The map has a sequential
+current-count gradient and numeric legend. SBA is collapsed and labelled experimental.
+
+Operations now supports an idempotent staged refresh: inspect, publisher check, fetch
+only when changed, validate, isolated rebuild, verify, and atomic swap. Job state and
+bounded output survive a server restart. Final checks passed: 19/19 Vitest tests,
+3/3 Playwright flows, typecheck, `data:verify`, and production build. Commits:
+`0ee197a`, `3210570`, `c9594b3`, and `332340f`.
+
+NYC ZAP remains the next product increment. The exact official dataset IDs, join rules,
+status semantics, and cautions are preserved in `PERPLEXITY_LENS_ZAP_AUDIT.md`.
+
 ## 2026-09-19 value release
 
 The value upgrade is complete and verified. It adds the queue-first analyst workflow,

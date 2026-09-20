@@ -10,11 +10,11 @@ The working hypothesis is that analysts benefit from transparent, count-based tr
 
 ## What it builds
 
-The application supports the same local investigation workflow for **Chicago** and **New York City**. Choose a market, review the ranked investigation queue, select an area, and read its Investigation Brief before opening its underlying permit evidence. The map is supporting geographic context; the queue and brief lead the workflow. The permit-type filter applies consistently to the queue, map, brief, trend, and evidence. Source-health panels report accepted, rejected, duplicate, out-of-scope, mapped, and unmapped rows so a viewer can assess coverage before interpreting a change.
+The application supports the same local investigation workflow for **Chicago** and **New York City**. Choose a market and an auditable CRE lens, review the ranked investigation queue, select an area, and read its Investigation Brief before opening its underlying permit evidence. The map is supporting geographic context; the queue and brief lead the workflow. Lens and exact permit-type filters apply consistently to the queue, map, brief, trend, and evidence. Analysts can record a disposition and note, save a cell to a browser-local watchlist, and export its evidence packet as JSON or HTML. Source-health panels report accepted, rejected, duplicate, out-of-scope, mapped, and unmapped rows so a viewer can assess coverage before interpreting a change.
 
 This is a product hypothesis, formed from desk research and the constraints of public data. No analyst interviews, adoption study, predictive validation, or measured time savings are claimed. The intended workflow and its explicit limits are in [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md).
 
-It also shows SBA 504 approvals as a separate city-labelled context panel and evidence list. Those approvals never affect permit-cell colors, rankings, or detail evidence. The application keeps the two indicators separate because an approval has a different geography, timing, and meaning from a permit record.
+It also shows SBA 504 approvals as a collapsed, experimental city-labelled context panel and evidence list. Those approvals never affect permit-cell colors, rankings, or detail evidence. The application keeps the two indicators separate because an approval has a different geography, timing, and meaning from a permit record.
 
 The comparison windows are fixed for reproducibility:
 
@@ -76,7 +76,7 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript, production build, and all four Vitest tests passed. API smoke passed for both markets; it reported Chicago current/prior permit totals of 31,555/31,927 and NYC totals of 168,852/166,122. These are source-record counts for the stated datasets, not findings about project starts or investment. The optimized NYC cell response was approximately 756 KB and 3.4 seconds in a warm local run; selected-area detail returns its 24 monthly values. Playwright passed two workflows: the two-city desktop investigation and a 390×844 mobile flow. Desktop Chicago/NYC and mobile layouts were visually inspected and were readable and functional, with no blocking issue observed.
+The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 19 tests across five files, including lens coverage and fallback, refresh idempotence and stages, persisted jobs, investigation briefs, and normalization. API smoke passed for both markets; it reported Chicago current/prior permit totals of 31,555/31,927 and NYC totals of 168,852/166,122. These are source-record counts for the stated datasets, not findings about project starts or investment. Playwright passed all three workflows: the two-city desktop investigation and saved handoff, a 390×844 mobile flow, and Data Operations. Desktop and mobile screenshots were visually inspected and were readable and functional.
 
 ## Sources and further reading
 

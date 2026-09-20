@@ -35,13 +35,13 @@ The top summary shows the market, fixed windows, accepted permit count, mapped a
 ## Five-minute guided tour
 
 1. Start the local app with `npm.cmd run data:seed` then `npm.cmd run dev` on Windows PowerShell, or replace `npm.cmd` with `npm` elsewhere. Open the Vite address displayed in the terminal.
-2. Keep **All types** selected. Confirm the fixed period label and scan the accepted/mapped/unmapped permit totals.
+2. Choose a **CRE lens**, such as Ground-up & site work. Expand **What this lens includes** to inspect exact source mappings, confidence, and ambiguity. Keep **All types** unless you also need one exact publisher category.
 3. In **Areas to investigate**, keep **Largest increase** to prioritize absolute count gain, or choose **Current count** to prioritize volume. The initial list hides areas with fewer than five permits across both periods; enable **Show low-volume areas** when those matter to the question.
 4. Click an area-list row or an H3 polygon. Both select the same area and open its detail below.
 5. Read current, prior, absolute change, safe percentage treatment, and the 24-month chart. Hover chart bars for individual monthly counts; open **Monthly values** for text values.
 6. In **Permit evidence**, switch between Current and Prior, paginate with Next/Previous, and click a permit type to open its retained source fields and official source link.
-7. Review **Source quality** before treating the pattern as useful. If the source is partial, the app disables growth comparison and ranks by current count.
-8. Optionally read the SBA panel as city-level borrower context only, then continue to your property, zoning, leasing, or broker research outside this app.
+7. Set a disposition, add a note, save the investigation, and export JSON or HTML for handoff.
+8. Review **Source quality** before treating the pattern as useful. If the source is partial, the app disables growth comparison and ranks by current count. SBA is optional experimental city-level context only.
 
 ## Chicago and NYC flows
 
@@ -76,7 +76,9 @@ The default list excludes an area whose combined current and prior count is belo
 H3 is the geographic grid used to group permits with usable publisher coordinates. Resolution 8 is a fixed visualization choice. A grid cell is not a neighborhood, parcel, market boundary, or real-estate submarket. “Source coordinate” means the publisher supplied the coordinate; it does not certify survey-grade or exact location.
 </details>
 
-## Filters, change math, and no baseline
+## Lenses, filters, change math, and no baseline
+
+**CRE lens** groups exact publisher categories into research intents. These are product mappings, not official classifications or proof of an asset class. Expand the mapping panel to see raw values, confidence, ambiguity, and source. Unknown future values remain visible under `UNCLASSIFIED`. Lens and exact permit-type filters intersect; `ALL` removes that level of filtering.
 
 **Permit type** uses the exact source type labels available in the selected market. It filters the summary, map, ranked list, detail, and evidence together. It does not classify records as commercial, residential, or a particular asset class.
 
@@ -106,6 +108,14 @@ The area detail gives 24 zero-filled monthly permit counts and separates Current
 - warnings disclose missing coordinates or NYC issuance-record caveats.
 
 This is evidence for a recorded permit event in the grid area, not proof of a construction start, completion, unique project, tenant decision, or investment thesis.
+
+## Analyst decision, watchlist, and export
+
+For a selected area, choose **Investigate**, **Monitor**, **Dismiss**, or **Escalate**, write a note, and save it. The saved investigation records the dataset, market, H3 cell, permit type, lens, and timestamp; selecting it restores that view. Saves live in the current browser only. **Export JSON** creates a structured evidence packet and **Export HTML** creates a readable handoff with the brief, decision, evidence, source links, and caveats.
+
+## Data Operations
+
+Open **Data Operations** to inspect the active dataset and recent job state. Verify checks the current database. Refresh inspects the manifest, checks the publisher, returns `UP_TO_DATE` when unchanged, or fetches, validates, rebuilds an isolated database, verifies it, and swaps it atomically. `FAILED` preserves the active database and exposes bounded diagnostic output. Refresh maintains the fixed analysis window; the publisher's newest observed date is disclosed separately.
 
 ## Source quality and accounting
 
@@ -217,6 +227,8 @@ Invoke-RestMethod 'http://127.0.0.1:3001/api/sources?market=CHICAGO'
 | H3 area | Resolution-8 display grid cell receiving a permit with usable source coordinates. |
 | Mapped / unmatched | Accepted permit with / without a usable map point. |
 | Permit type | Exact publisher type label, not an asset-class classifier. |
+| CRE lens | Auditable product grouping of exact source values for research triage. |
+| Disposition | Browser-local analyst decision attached to a saved investigation. |
 | Public snapshot | Frozen local extract of public source data used by the demo. |
 | Source provenance | Retained source fields, warnings, and official record/resource link. |
 

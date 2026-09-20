@@ -1,5 +1,22 @@
 # AI log
 
+## 2026-09-19 — final value release
+
+Perplexity research was used to audit competitive positioning, define the source-specific
+permit-lens taxonomy, and verify the future NYC ZAP contract. Terra subagents implemented
+the lens backend and began the heatmap and Operations work. The primary agent reviewed,
+completed, integrated, and committed every preserved change after interrupting the two
+slow tasks. No agent work remains in flight.
+
+Decision: position the product as an auditable public-data screening and investigation
+handoff workflow, complementary to licensed CRE systems. Do not claim novel permit
+aggregation, prediction, commercial validation, or a moat. PropertyLabs is a close
+comparable. SBA remains experimental city-level borrower context. NYC ZAP is deferred
+as a separate earlier-stage entitlement signal.
+
+Verification: 19/19 Vitest tests, 3/3 Playwright flows, typecheck, public-data
+verification, production build, and visual review passed.
+
 ## 2026-09-19 — T01 bootstrap
 
 Decision: use explicitly labeled deterministic synthetic fixtures for Chicago and NYC in the initial runnable vertical slice. The fixture seed is `cre-radar-t01`; the rows are source-shaped only and carry no public-record provenance. External Chicago, NYC, and SBA retrieval/mapping are deferred to later tasks.
