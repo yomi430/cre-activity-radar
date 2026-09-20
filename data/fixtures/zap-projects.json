@@ -1,0 +1,6 @@
+[
+  {"project_id":"P-1","project_status":"Active","public_status":"Active application","app_filed_date":"2025-08-05"},
+  {"project_id":"P-2","project_status":"Complete","public_status":"Closed","app_filed_date":null},
+  {"project_id":"P-3","project_status":"Withdrawn-Other","public_status":"Withdrawn","app_filed_date":"2023-01-15"},
+  {"project_id":"P-4","project_status":"A future source value","public_status":null,"app_filed_date":null}
+]

@@ -12,6 +12,55 @@ export type HealthResponse = z.infer<typeof healthResponseSchema>;
 
 export type Period = 'current' | 'prior';
 export type Source = 'CHICAGO_PERMIT' | 'NYC_DOB_NOW' | 'SBA_504';
+
+/** NYC ZAP is an entitlement-stage source. It must never be blended into permit ranking. */
+export const zapWindowIds = ['ALL_RECORDS', 'FILED_24_MONTHS'] as const;
+export const zapWindowSchema = z.enum(zapWindowIds);
+export type ZapWindow = (typeof zapWindowIds)[number];
+export const zapProjectStatusIds = ['ACTIVE', 'ON_HOLD', 'WITHDRAWN', 'TERMINATED', 'COMPLETED_OTHER', 'UNKNOWN'] as const;
+export type ZapProjectStatus = (typeof zapProjectStatusIds)[number];
+export interface ZapSourceMetadata {
+  source: 'NYC_ZAP_PROJECT_DATA' | 'NYC_ZAP_BBL' | 'NYC_PLUTO';
+  datasetId: 'hgx4-8ukb' | '2iga-a6mk' | '64uk-42ks';
+  datasetUrl: string;
+  publisherUpdatedAt: string | null;
+  retrievedAt: string;
+  snapshotId: string;
+  caveat: string;
+}
+export interface ZapCoverage {
+  window: ZapWindow;
+  allTrackedProjects: number;
+  includedProjects: number;
+  projectsWithAppFiledDate: number;
+  missingAppFiledDate: number;
+  filedDateCoverage: number | null;
+  validatedBblRows: number;
+  unvalidatedBblRows: number;
+  unmatchedParcelRows: number;
+  nullCoordinateParcelRows: number;
+  placedProjectCells: number;
+  possiblyRemovedProjects: number;
+  possiblyRemovedBblRows: number;
+  orphanBblRows: number;
+  changeHistoryAvailable: boolean;
+  caveats: string[];
+}
+export interface ZapProjectCount {
+  projectCount: number;
+  statusCounts: Record<ZapProjectStatus, number>;
+}
+export interface ZapCellCount extends ZapProjectCount {
+  h3Cell: string;
+  precision: 'PARCEL_CENTROID';
+}
+export interface ZapSummaryData {
+  window: ZapWindow;
+  counts: ZapProjectCount;
+  coverage: ZapCoverage;
+  sources: ZapSourceMetadata[];
+  permitRankingTreatment: 'SEPARATE_ENTITLEMENT_LAYER';
+}
 export const lensIds = ['ALL', 'GROUND_UP_SITE', 'REINVESTMENT', 'BUILDING_SYSTEMS', 'TEMPORARY_LOGISTICS', 'SIGNAGE', 'ADMIN_LOW_INFORMATION', 'UNCLASSIFIED'] as const;
 export const lensIdSchema = z.enum(lensIds);
 export type LensId = z.infer<typeof lensIdSchema>;

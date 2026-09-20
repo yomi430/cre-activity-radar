@@ -8,6 +8,9 @@ export function openDatabase(): DatabaseSync {
   mkdirSync(dirname(databasePath), { recursive: true });
   const database = new DatabaseSync(databasePath);
   database.exec('PRAGMA foreign_keys = ON');
+  // Existing permit databases predate the optional ZAP tables.  Schema creation is
+  // idempotent, so every reader gets the additive entitlement foundation safely.
+  createSchema(database);
   return database;
 }
 
@@ -28,6 +31,32 @@ export function createSchema(database: DatabaseSync): void {
     );
     CREATE INDEX IF NOT EXISTS approvals_market_date ON approvals(market, event_date);
     CREATE TABLE IF NOT EXISTS source_reports (source TEXT NOT NULL, market TEXT NOT NULL, report_json TEXT NOT NULL, PRIMARY KEY(source, market));
+    CREATE TABLE IF NOT EXISTS zap_snapshots (
+      snapshot_id TEXT PRIMARY KEY, retrieved_at TEXT NOT NULL, project_updated_at TEXT, bbl_updated_at TEXT, pluto_updated_at TEXT,
+      project_rows INTEGER NOT NULL, bbl_rows INTEGER NOT NULL, pluto_rows INTEGER NOT NULL, complete INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS zap_projects (
+      project_id TEXT PRIMARY KEY, project_status_raw TEXT, project_status TEXT NOT NULL, public_status TEXT, app_filed_date TEXT,
+      raw_json TEXT NOT NULL, first_snapshot_id TEXT NOT NULL, last_snapshot_id TEXT NOT NULL, possibly_removed INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS zap_project_bbls (
+      association_id TEXT PRIMARY KEY, project_id TEXT NOT NULL, bbl TEXT, validated INTEGER NOT NULL, raw_json TEXT NOT NULL,
+      first_snapshot_id TEXT NOT NULL, last_snapshot_id TEXT NOT NULL, possibly_removed INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY(project_id) REFERENCES zap_projects(project_id)
+    );
+    CREATE TABLE IF NOT EXISTS zap_parcels (
+      bbl TEXT PRIMARY KEY, lat REAL, lng REAL, h3_cell TEXT, raw_json TEXT NOT NULL, snapshot_id TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS zap_project_cells (
+      project_id TEXT NOT NULL, h3_cell TEXT NOT NULL, precision TEXT NOT NULL, snapshot_id TEXT NOT NULL,
+      PRIMARY KEY(project_id, h3_cell), FOREIGN KEY(project_id) REFERENCES zap_projects(project_id)
+    );
+    CREATE INDEX IF NOT EXISTS zap_project_cells_cell ON zap_project_cells(h3_cell);
+    CREATE INDEX IF NOT EXISTS zap_projects_filed_date ON zap_projects(app_filed_date);
+    CREATE TABLE IF NOT EXISTS zap_rejections (
+      snapshot_id TEXT NOT NULL, kind TEXT NOT NULL, row_count INTEGER NOT NULL,
+      PRIMARY KEY(snapshot_id, kind), FOREIGN KEY(snapshot_id) REFERENCES zap_snapshots(snapshot_id)
+    );
   `);
 }
 

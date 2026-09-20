@@ -43,6 +43,8 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
   await page.screenshot({ path: 'test-results/chicago-desktop.png', fullPage: true });
 
   await page.locator('.market-select select').selectOption('NYC');
+  await expect(page.getByRole('heading', { name: 'NYC ZAP entitlement applications' })).toBeVisible();
+  await expect(page.getByText('ZAP source quality and coverage')).toBeVisible();
   await expect(page.locator('.finding').first()).toBeVisible();
   await chooseFirstArea(page);
   await expect(page.locator('.brief-title h2')).toBeVisible();
