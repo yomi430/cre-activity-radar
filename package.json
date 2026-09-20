@@ -17,6 +17,8 @@
     "data:verify": "node scripts/verify-data.mjs",
     "data:fetch:chicago": "node scripts/fetch-permits.mjs chicago",
     "data:fetch:nyc": "node scripts/fetch-permits.mjs nyc",
+    "data:fetch:permits": "npm run data:fetch:chicago && npm run data:fetch:nyc",
+    "data:setup:full": "npm run data:fetch:permits && npm run data:seed && npm run data:verify",
     "data:fetch:zap": "node scripts/refresh-zap.mjs",
     "data:fetch:acris": "node scripts/refresh-acris.mjs",
     "data:fetch:sba": "node scripts/fetch-sba.mjs",

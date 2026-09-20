@@ -232,6 +232,22 @@ Use Node 24.18.x and install from the lockfile: `npm.cmd ci` on Windows PowerShe
 <summary>I see “Run data:seed first” or an empty app</summary>
 
 Run `npm.cmd run data:seed`, then refresh/restart the server. The API requires a local SQLite snapshot. If seed reports permit sources missing, create the supplied public retained demo with `npm.cmd run data:bundle-demo` or acquire the fixed-window raw permit extracts with `data:fetch:chicago` and `data:fetch:nyc`, then seed again. Use `npm.cmd run data:verify` to check the local snapshot.
+
+The repository intentionally carries the compact `data/demo/` and `data/fixtures/` inputs,
+while `.gitignore` excludes `data/raw/` and `data/runtime/`. The full downloaded snapshots
+are kept in the author's local workspace and can be reproduced with the fetch scripts; they
+are not ordinary GitHub files because the NYC extract alone is about 183 MB. A clean checkout
+therefore runs immediately in retained-demo mode, while a full-data checkout uses the same
+seed and application code after acquisition. Property-use, ZAP, and ACRIS bundled files are
+integration fixtures unless a verified live snapshot has been explicitly fetched.
+
+To acquire, seed, and verify the complete fixed-window Chicago and NYC permit sources in one
+step, run `npm.cmd run data:setup:full`. It requires network access, downloads more than
+200 MB, and may take several minutes. The downloader stages every file, reconciles the
+publisher count, computes a checksum, and retains the previous valid snapshot on failure.
+Use `data:fetch:zap` and `data:fetch:acris` separately when those NYC-only evidence families
+are needed. SBA is intentionally excluded from the full bootstrap: supply the separately
+verified CSV under `data/raw/`, or use the retained demo sample.
 </details>
 
 <details>

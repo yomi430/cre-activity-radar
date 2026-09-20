@@ -72,13 +72,53 @@ npm.cmd run dev
 
 Open the Vite URL printed by the command (normally `http://127.0.0.1:5173`). The submitted local snapshot is `public-full-5f0dea082481-91aa29bb1cde`: 63,482 Chicago records (62,750 mapped; 732 unmapped; 8,316 without a usable cost) and 334,974 NYC records (333,591 mapped; 1,383 unmapped). Both are `complete-query` extracts over the fixed windows, retrieved on 2026-09-19. The seed script uses those complete local raw snapshots when present; otherwise it seeds bundled deterministic public retained samples. The source-health panel tells you whether a source is `complete-query` or `partial`. For partial samples, growth ranking and percentages are disabled; sample counts must not be treated as market totals.
 
+### Full data and repository demo data
+
+The project deliberately supports both data modes so reviewers do not have to choose
+between reproducibility and a quick start:
+
+| Mode | Location | Included in GitHub? | Intended use |
+| --- | --- | --- | --- |
+| Complete downloaded snapshots | `data/raw/` | No; retained locally and reproducible with the fetch commands | Full-data verification and the interview author's local demo |
+| Retained permit demo | `data/demo/` | Yes | Immediate clean-checkout startup with public retained samples |
+| Small integration fixtures | `data/fixtures/` | Yes | Deterministic property-context, ZAP, ACRIS, and test behavior |
+| Generated SQLite database | `data/runtime/` | No; rebuilt by `data:seed` | Local application runtime |
+
+The exclusion of `data/raw/` is a packaging constraint, not missing implementation. The
+current full files include an approximately 183 MB NYC JSONL file, which exceeds GitHub's
+normal 100 MB per-file limit, plus approximately 34 MB of Chicago permits and 57 MB of SBA
+data. They remain in the local workspace and `.gitignore` prevents accidental publication.
+The fetch scripts, selected-field contracts, manifests, audits, and checksum verification
+are committed. A reviewer gets a working app from the tracked demo data; an evaluator who
+wants the complete public snapshot can run the documented fetch commands and reseed.
+
+For the complete Chicago and NYC permit snapshot, a reviewer can run one command:
+
+```powershell
+npm.cmd run data:setup:full
+```
+
+It downloads both fixed-window official permit extracts into `data/raw/`, validates their
+row counts and checksums, seeds the local database, and runs data verification. Existing
+valid files are replaced only after a complete staged download. This command requires
+network access, can download more than 200 MB, and may take several minutes. ZAP and ACRIS
+remain explicit optional refreshes (`data:fetch:zap` and `data:fetch:acris`) because they are
+separate evidence products rather than prerequisites for permit discovery. SBA acquisition
+is not included: the repository currently consumes a separately verified SBA CSV when it is
+present in `data/raw/`; the bundled retained SBA sample keeps clean-checkout behavior working.
+
+Exceptions: the bundled NYC property-use, ZAP, and ACRIS files are deliberately small
+integration fixtures, not complete live extracts. Their pages and exports label this
+boundary. Live ZAP/ACRIS acquisition is implemented separately, while a production-scale
+PLUTO property-context refresh remains future work.
+
 For a built local demo:
 
 ```powershell
 npm.cmd run demo
 ```
 
-Useful data commands are `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap`, `data:fetch:acris`, `data:bundle-demo`, `data:seed`, and `data:verify`. Permit fetches query the fixed windows, freeze selected source fields, and reconcile source counts before keeping a snapshot. The ZAP fetch polls official NYC metadata, pages Project Data and BBL associations, fetches only referenced PLUTO parcels, and preserves retained snapshots for cautious change detection. `data:fetch:sba` remains an explicit source-acquisition task; the verified SBA CSV may instead be supplied under `data/raw/` and is then ingested as borrower-city context.
+Useful data commands are `data:setup:full`, `data:fetch:permits`, `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap`, `data:fetch:acris`, `data:bundle-demo`, `data:seed`, and `data:verify`. Permit fetches query the fixed windows, freeze selected source fields, and reconcile source counts before keeping a snapshot. The ZAP fetch polls official NYC metadata, pages Project Data and BBL associations, fetches only referenced PLUTO parcels, and preserves retained snapshots for cautious change detection. The verified SBA CSV may be supplied under `data/raw/` and is then ingested as borrower-city context; the current `data:fetch:sba` placeholder deliberately exits rather than downloading an unaudited file.
 
 ## Validation status
 

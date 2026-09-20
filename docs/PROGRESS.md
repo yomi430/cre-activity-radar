@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-09-20 submission data packaging
+
+The repository retains compact public permit demo data and small integration fixtures for a
+working clean checkout. Complete permit/SBA downloads remain locally under ignored
+`data/raw/`, and the generated SQLite database remains under ignored `data/runtime/`.
+Reviewers can run `npm.cmd run data:setup:full` to stage and count-check both official permit
+extracts, seed, and verify in one command. ZAP and ACRIS remain optional guarded refreshes;
+SBA requires the separately verified CSV and is not silently downloaded by the bootstrap.
+
 ## 2026-09-20 cold-start release pass
 
 The seed now materializes only the invariant unfiltered prior/current total and mapped counts
