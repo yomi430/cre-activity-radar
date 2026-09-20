@@ -1,35 +1,41 @@
 import type { DatabaseSync } from 'node:sqlite';
-import type { ApprovalEvidence, CellSignal, InvestigationBrief, InvestigationDriver, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData } from '../shared/contracts.js';
+import type { ApprovalEvidence, CellSignal, InvestigationBrief, InvestigationDriver, LensId, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData } from '../shared/contracts.js';
 import { change } from '../domain/change.js';
 import { months, WINDOWS } from '../domain/dates.js';
 import { persistenceForCurrent, sortDrivers, surfacedNarrative } from '../domain/investigation.js';
 import { polygonFor } from '../domain/spatial.js';
+import { classifyPermit, LENS_DEFINITIONS, lensWhere } from '../domain/lenses.js';
 
 type PermitRow = { id: string; market: Market; source: 'CHICAGO_PERMIT' | 'NYC_DOB_NOW'; event_date: string; permit_number: string | null; permit_type: string; reported_cost_cents: number | null; address: string | null; description: string | null; h3_cell: string | null; lat: number | null; lng: number | null; warnings_json: string; raw_json: string };
 const dates = [WINDOWS.prior.start, WINDOWS.prior.endExclusive, WINDOWS.current.start, WINDOWS.current.endExclusive];
-function typeWhere(permitType: string) { return permitType === 'ALL' ? { clause: '', params: [] as string[] } : { clause: ' AND permit_type = ?', params: [permitType] }; }
+function filterWhere(market: Market, permitType: string, lens: LensId) {
+  const type = permitType === 'ALL' ? { clause: '', params: [] as string[] } : { clause: ' AND permit_type = ?', params: [permitType] };
+  const category = lensWhere(market, lens);
+  return { clause: `${type.clause}${category.clause}`, params: [...type.params, ...category.params] };
+}
+function selection(permitType: string, lens: LensId) { return { permitType, lens, defaultTreatment: 'ALL_RECORDS_WITH_DEPRIORITIZATION' as const, noCompositeScore: true as const }; }
 function comparable(db: DatabaseSync, market: Market): boolean { const reports = reportsFor(db, market).filter(r => r.source !== 'SBA_504'); return reports.length > 0 && reports.every(r => r.completeness === 'complete-query'); }
-function countChange(db: DatabaseSync, market: Market, permitType: string, mapped: boolean | null) {
-  const filter = typeWhere(permitType); const mapClause = mapped ? ' AND h3_cell IS NOT NULL' : mapped === false ? ' AND h3_cell IS NULL' : '';
+function countChange(db: DatabaseSync, market: Market, permitType: string, lens: LensId, mapped: boolean | null) {
+  const filter = filterWhere(market, permitType, lens); const mapClause = mapped ? ' AND h3_cell IS NOT NULL' : mapped === false ? ' AND h3_cell IS NULL' : '';
   const row = db.prepare(`SELECT SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current FROM permits WHERE market = ?${mapClause}${filter.clause}`).get(dates[0], dates[1], dates[2], dates[3], market, ...filter.params) as { prior: number | null; current: number | null };
   return change(row.current ?? 0, row.prior ?? 0, comparable(db, market));
 }
 export function reportsFor(db: DatabaseSync, market: Market): SourceReport[] { return (db.prepare('SELECT report_json FROM source_reports WHERE market = ? ORDER BY source').all(market) as Array<{ report_json: string }>).map(x => JSON.parse(x.report_json) as SourceReport); }
-export function summaryFor(db: DatabaseSync, market: Market, permitType: string): SummaryData {
+export function summaryFor(db: DatabaseSync, market: Market, permitType: string, lens: LensId = 'ALL'): SummaryData {
   const typeRows = db.prepare('SELECT DISTINCT permit_type FROM permits WHERE market = ? ORDER BY permit_type').all(market) as Array<{ permit_type: string }>;
   const sourceReports = reportsFor(db, market); const approval = sbaFor(db, market);
-  return { market, mode: sourceReports.some(r => r.mode === 'public') ? 'public' : 'synthetic', windows: WINDOWS, comparable: comparable(db, market), permitTypes: typeRows.map(x => x.permit_type), acceptedPermits: countChange(db, market, permitType, null), mappedPermits: countChange(db, market, permitType, true), unmappedPermits: countChange(db, market, permitType, false), sources: sourceReports, sba: approval };
+  return { market, mode: sourceReports.some(r => r.mode === 'public') ? 'public' : 'synthetic', windows: WINDOWS, comparable: comparable(db, market), permitTypes: typeRows.map(x => x.permit_type), lenses: [...LENS_DEFINITIONS], selection: selection(permitType, lens), acceptedPermits: countChange(db, market, permitType, lens, null), mappedPermits: countChange(db, market, permitType, lens, true), unmappedPermits: countChange(db, market, permitType, lens, false), sources: sourceReports, sba: approval };
 }
-export function cellsFor(db: DatabaseSync, market: Market, permitType: string) {
-  const filter = typeWhere(permitType); const rows = db.prepare(`SELECT h3_cell, MIN(address) AS address, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current FROM permits WHERE market = ? AND h3_cell IS NOT NULL${filter.clause} GROUP BY h3_cell HAVING prior > 0 OR current > 0 ORDER BY current DESC, h3_cell`).all(dates[0], dates[1], dates[2], dates[3], market, ...filter.params) as Array<{ h3_cell: string; address: string | null; prior: number; current: number }>;
+export function cellsFor(db: DatabaseSync, market: Market, permitType: string, lens: LensId = 'ALL') {
+  const filter = filterWhere(market, permitType, lens); const rows = db.prepare(`SELECT h3_cell, MIN(address) AS address, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current FROM permits WHERE market = ? AND h3_cell IS NOT NULL${filter.clause} GROUP BY h3_cell HAVING prior > 0 OR current > 0 ORDER BY current DESC, h3_cell`).all(dates[0], dates[1], dates[2], dates[3], market, ...filter.params) as Array<{ h3_cell: string; address: string | null; prior: number; current: number }>;
   // The collection drives the map/list and does not need 24 monthly values per cell.
   // Monthly data is calculated only for the selected-cell detail endpoint.
   const isComparable = comparable(db, market);
   const cells = rows.map(row => { const permitCount = change(row.current ?? 0, row.prior ?? 0, isComparable); return { market, h3Cell: row.h3_cell, label: row.address ? `Near ${row.address}` : `${market === 'NYC' ? 'NYC' : 'Chicago'} H3 ${row.h3_cell.slice(-5)}`, permitCount, monthly: [], lowVolume: permitCount.current + permitCount.previous < 5 } satisfies CellSignal; });
   return { cells, geojson: { type: 'FeatureCollection' as const, features: cells.map(cell => ({ type: 'Feature' as const, properties: { h3Cell: cell.h3Cell, current: cell.permitCount.current, label: cell.label }, geometry: { type: 'Polygon' as const, coordinates: polygonFor(cell.h3Cell) } })) } };
 }
-export function signalFor(db: DatabaseSync, market: Market, cell: string, permitType: string): CellSignal | null {
-  const filter = typeWhere(permitType); const row = db.prepare(`SELECT SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current FROM permits WHERE market = ? AND h3_cell = ?${filter.clause}`).get(dates[0], dates[1], dates[2], dates[3], market, cell, ...filter.params) as { prior: number | null; current: number | null };
+export function signalFor(db: DatabaseSync, market: Market, cell: string, permitType: string, lens: LensId = 'ALL'): CellSignal | null {
+  const filter = filterWhere(market, permitType, lens); const row = db.prepare(`SELECT SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS prior, SUM(CASE WHEN event_date >= ? AND event_date < ? THEN 1 ELSE 0 END) AS current FROM permits WHERE market = ? AND h3_cell = ?${filter.clause}`).get(dates[0], dates[1], dates[2], dates[3], market, cell, ...filter.params) as { prior: number | null; current: number | null };
   if (!(row.prior ?? 0) && !(row.current ?? 0)) return null;
   const monthlyRows = db.prepare(`SELECT substr(event_date, 1, 7) AS month, COUNT(*) AS count FROM permits WHERE market = ? AND h3_cell = ?${filter.clause} GROUP BY month`).all(market, cell, ...filter.params) as Array<{ month: string; count: number }>;
   const values = new Map(monthlyRows.map(x => [x.month, x.count])); const permitCount = change(row.current ?? 0, row.prior ?? 0, comparable(db, market));
@@ -47,10 +53,10 @@ function sourceSemantics(market: Market): string {
  * Builds an auditable research queue item from source records for one H3 cell.
  * The output intentionally contains no modeled score, causal claim, or prediction.
  */
-export function investigationBriefFor(db: DatabaseSync, market: Market, cell: string, permitType: string): InvestigationBrief | null {
-  const signal = signalFor(db, market, cell, permitType);
+export function investigationBriefFor(db: DatabaseSync, market: Market, cell: string, permitType: string, lens: LensId = 'ALL'): InvestigationBrief | null {
+  const signal = signalFor(db, market, cell, permitType, lens);
   if (!signal) return null;
-  const filter = typeWhere(permitType);
+  const filter = filterWhere(market, permitType, lens);
   const base = `market = ? AND h3_cell = ?${filter.clause}`;
   const baseParams = [market, cell, ...filter.params];
   const counts = signal.permitCount;
@@ -74,7 +80,7 @@ export function investigationBriefFor(db: DatabaseSync, market: Market, cell: st
   const repeatedAddresses = addressRows.map(row => {
     const ids = (db.prepare(`SELECT id FROM permits WHERE ${base} AND address = ? AND event_date >= ? AND event_date < ? ORDER BY event_date DESC, id ASC LIMIT 10`)
       .all(...baseParams, row.address, WINDOWS.current.start, WINDOWS.current.endExclusive) as Array<{ id: string }>).map(record => record.id);
-    const params = new URLSearchParams({ market, permitType, period: 'current' });
+    const params = new URLSearchParams({ market, permitType, lens, period: 'current' });
     return { address: row.address, prior: row.prior ?? 0, current: row.current ?? 0, absolute: (row.current ?? 0) - (row.prior ?? 0), currentRecordIds: ids, evidencePath: `/api/cells/${cell}/evidence?${params.toString()}` };
   });
   const largestCurrentPermits = (db.prepare(`SELECT id, event_date, address, permit_type, reported_cost_cents FROM permits WHERE ${base}
@@ -104,7 +110,7 @@ export function investigationBriefFor(db: DatabaseSync, market: Market, cell: st
     ...(counts.basis === 'NO_BASELINE' ? ['Check prior-period source coverage and record semantics before interpreting a zero prior count as a new trend.'] : []),
   ];
   return {
-    market, h3Cell: cell, permitType, label: signal.label, windows: WINDOWS, permitCount: counts,
+    market, h3Cell: cell, permitType, lens, selection: selection(permitType, lens), label: signal.label, windows: WINDOWS, permitCount: counts,
     whySurfaced: { narrative: surfacedNarrative(counts, permitType), facts }, drivers,
     activityPersistence: persistence, repeatedAddresses, largestCurrentPermits,
     dataQuality: {
@@ -115,13 +121,13 @@ export function investigationBriefFor(db: DatabaseSync, market: Market, cell: st
     canSuggest, cannotConclude, recommendedNextChecks,
   };
 }
-export function evidenceFor(db: DatabaseSync, market: Market, cell: string, type: string, period: 'prior' | 'current', limit: number, offset: number) {
-  const filter = typeWhere(type); const w = WINDOWS[period]; const where = `market = ? AND h3_cell = ? AND event_date >= ? AND event_date < ?${filter.clause}`;
+export function evidenceFor(db: DatabaseSync, market: Market, cell: string, type: string, period: 'prior' | 'current', limit: number, offset: number, lens: LensId = 'ALL') {
+  const filter = filterWhere(market, type, lens); const w = WINDOWS[period]; const where = `market = ? AND h3_cell = ? AND event_date >= ? AND event_date < ?${filter.clause}`;
   const total = (db.prepare(`SELECT COUNT(*) AS n FROM permits WHERE ${where}`).get(market, cell, w.start, w.endExclusive, ...filter.params) as { n: number }).n;
   const rows = db.prepare(`SELECT * FROM permits WHERE ${where} ORDER BY event_date DESC, id LIMIT ? OFFSET ?`).all(market, cell, w.start, w.endExclusive, ...filter.params, limit, offset) as PermitRow[];
   return { data: rows.map(evidence), total };
 }
-function evidence(row: PermitRow): PermitEvidence { return { id: row.id, market: row.market, source: row.source, date: row.event_date, permitNumber: row.permit_number, permitType: row.permit_type, address: row.address, description: row.description, reportedCostCents: row.reported_cost_cents, h3Cell: row.h3_cell, point: row.lat === null || row.lng === null ? null : { lat: row.lat, lng: row.lng, precision: 'SOURCE_COORDINATE', provider: row.source }, warnings: JSON.parse(row.warnings_json) }; }
+function evidence(row: PermitRow): PermitEvidence { return { id: row.id, market: row.market, source: row.source, date: row.event_date, permitNumber: row.permit_number, permitType: row.permit_type, lens: classifyPermit(row.market, row.permit_type, JSON.parse(row.raw_json) as Record<string, unknown>), address: row.address, description: row.description, reportedCostCents: row.reported_cost_cents, h3Cell: row.h3_cell, point: row.lat === null || row.lng === null ? null : { lat: row.lat, lng: row.lng, precision: 'SOURCE_COORDINATE', provider: row.source }, warnings: JSON.parse(row.warnings_json) }; }
 export function recordFor(db: DatabaseSync, id: string): RecordDetail | null {
   const permit = db.prepare('SELECT * FROM permits WHERE id = ?').get(id) as PermitRow | undefined;
   if (permit) return { id, normalized: evidence(permit), raw: JSON.parse(permit.raw_json), sourceUrl: permit.source === 'CHICAGO_PERMIT' ? `https://data.cityofchicago.org/resource/ydr8-5enu.json?id=${encodeURIComponent(permit.id.split(':')[1]!)}` : `https://data.cityofnewyork.us/resource/rbx6-tga4.json?$where=${encodeURIComponent(`source_row_id='${permit.id.split(':')[1]!}'`)}`, warnings: JSON.parse(permit.warnings_json) };

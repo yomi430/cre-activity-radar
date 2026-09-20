@@ -12,6 +12,12 @@ export type HealthResponse = z.infer<typeof healthResponseSchema>;
 
 export type Period = 'current' | 'prior';
 export type Source = 'CHICAGO_PERMIT' | 'NYC_DOB_NOW' | 'SBA_504';
+export const lensIds = ['ALL', 'GROUND_UP_SITE', 'REINVESTMENT', 'BUILDING_SYSTEMS', 'TEMPORARY_LOGISTICS', 'SIGNAGE', 'ADMIN_LOW_INFORMATION', 'UNCLASSIFIED'] as const;
+export const lensIdSchema = z.enum(lensIds);
+export type LensId = z.infer<typeof lensIdSchema>;
+export interface LensDefinition { id: LensId; label: string; rankingTreatment: 'ALL_RECORDS' | 'PRIMARY' | 'DEPRIORITIZED'; description: string; }
+export interface LensClassification { lens: Exclude<LensId, 'ALL'>; confidence: 'HIGH' | 'MEDIUM' | 'LOW'; ambiguity: string; officialSourceUrl: string; rawPermitType: string; rawWorkType: string | null; }
+export interface LensSelection { permitType: string; lens: LensId; defaultTreatment: 'ALL_RECORDS_WITH_DEPRIORITIZATION'; noCompositeScore: true; }
 export interface ApiResponse<T> {
   datasetId: string;
   market?: Market;
@@ -81,6 +87,8 @@ export interface SummaryData {
   windows: Windows;
   comparable: boolean;
   permitTypes: string[];
+  lenses: LensDefinition[];
+  selection: LensSelection;
   acceptedPermits: Change;
   mappedPermits: Change;
   unmappedPermits: Change;
@@ -94,6 +102,7 @@ export interface PermitEvidence {
   date: string;
   permitNumber: string | null;
   permitType: string;
+  lens: LensClassification;
   address: string | null;
   description: string | null;
   reportedCostCents: number | null;
@@ -165,6 +174,8 @@ export interface InvestigationBrief {
   market: Market;
   h3Cell: string;
   permitType: string;
+  lens: LensId;
+  selection: LensSelection;
   label: string;
   windows: Windows;
   permitCount: Change;
