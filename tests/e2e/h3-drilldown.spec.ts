@@ -19,10 +19,10 @@ test.describe('persistent H3 drill-down', () => {
     await expect(page.locator('.map-panel')).toHaveCSS('position', 'sticky');
     const selected = page.getByLabel('Selected H3 cell');
     const selectedId = await selected.textContent();
-    const queueBefore = (await page.locator('.finding').allInnerTexts()).join('|');
     await page.getByLabel('H3 CRE lens').selectOption('GROUND_UP_SITE');
     await expect(selected).toHaveText(selectedId ?? '');
-    expect((await page.locator('.finding').allInnerTexts()).join('|')).toBe(queueBefore);
+    await expect(page).toHaveURL(/[?&]lens=ALL/);
+    await expect(page).toHaveURL(/[?&]localLens=GROUND_UP_SITE/);
     await expect(page.getByRole('heading', { name: /lead|activity/i }).first()).toBeVisible();
     await expect(page.getByText('Raw permit evidence')).toBeVisible();
   });

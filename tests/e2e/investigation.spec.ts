@@ -11,7 +11,9 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
   await page.route(/tile\.openstreetmap\.org|arcgisonline\.com/, route => route.abort());
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'CRE Activity Radar' })).toBeVisible();
+  await page.getByRole('button', { name: 'Data & methods', exact: true }).click();
   await expect(page.getByText('Source quality')).toBeVisible();
+  await page.getByRole('button', { name: 'City discovery', exact: true }).click();
   await expect(page.getByLabel('Current permit count heat map legend')).toBeVisible();
   await page.getByLabel('CRE lens').selectOption('GROUND_UP_SITE');
   await expect(page.getByText('What this lens includes')).toBeVisible();
@@ -43,8 +45,10 @@ test('investigates a Chicago area, opens source evidence, and repeats in NYC', a
   await page.screenshot({ path: 'test-results/chicago-desktop.png', fullPage: true });
 
   await page.locator('.market-select select').selectOption('NYC');
+  await page.getByRole('button', { name: 'NYC entitlements', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'NYC ZAP entitlement applications' })).toBeVisible();
   await expect(page.getByText('ZAP source quality and coverage')).toBeVisible();
+  await page.getByRole('button', { name: 'City discovery', exact: true }).click();
   await expect(page.locator('.finding').first()).toBeVisible();
   await chooseFirstArea(page);
   await expect(page.locator('.brief-title h2')).toBeVisible();

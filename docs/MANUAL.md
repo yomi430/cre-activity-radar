@@ -1,5 +1,13 @@
 # CRE Activity Radar manual
 
+## Navigating the workspace
+
+Use **City discovery** to choose market-wide filters, compare ranked H3 areas, and use the map. Selecting a card or hexagon opens **Research workspace**, where the selected H3 has its own drill-down, evidence, qualification, and lead-saving controls. **Back to whole city** clears the H3 while keeping the market and global discovery filters.
+
+Research contains two browser-local memory tools. **Recently viewed areas** keeps the latest five H3 visits for navigation and shows each H3 ID. **Signal inventory** contains only leads deliberately saved with a disposition or note. Opening either restores its market and H3 context; clearing recent history does not delete saved signals.
+
+For NYC, **NYC entitlements** contains ZAP as a separate earlier-stage layer. **Data & methods** explains every CRE lens and exact source mapping, source quality, and SBA context. **Data operations** contains controlled refresh and verification jobs.
+
 This manual helps a CRE analyst use the prototype to decide which recorded permit activity deserves a closer look. It does not provide an AI chatbot, an answer engine, a forecast, a property valuation, or a recommendation. It makes the evidence behind a narrow, repeatable first pass easy to inspect.
 
 The comparison is always **Jul 2025–Jun 2026** (`[2025-07-01, 2026-07-01)`) versus **Jul 2024–Jun 2025** (`[2024-07-01, 2025-07-01)`).

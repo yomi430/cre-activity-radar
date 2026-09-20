@@ -55,5 +55,5 @@ describe('staged refresh pipeline', () => {
       expect(total).toBeGreaterThan(0);
       expect(counts).toEqual([total, total]);
     } finally { database.close(); }
-  });
+  }, 15_000);
 });

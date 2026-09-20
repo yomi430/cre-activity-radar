@@ -1,5 +1,9 @@
 # Progress
 
+## 2026-09-20 focused workspace navigation
+
+The analyst experience is split into City discovery, Research workspace, conditional NYC entitlements, Data & methods, and Data Operations. H3 selection opens Research; Back to whole city retains market/global filters while clearing H3-local URL state. Research co-locates the latest five H3 visits and saved signals while explaining navigation history versus deliberate lead inventory. Data & methods now has a plain-language, auditable CRE lens catalog. Validation passed: 40/40 Vitest, typecheck, production build, and 11/11 Playwright tests with visual inspection.
+
 ## 2026-09-20 NYC ZAP live refresh
 
 The official NYC ZAP acquisition path is implemented in `767e96b`, with safeguard tests
