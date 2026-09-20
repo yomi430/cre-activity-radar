@@ -82,8 +82,7 @@ Useful data commands are `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap
 
 ## Validation status
 
-Core data, type, build, and unit checks passed against the corrected full-public dataset;
-the browser timing result is stated precisely below:
+All submission checks passed against the corrected full-public dataset:
 
 ```powershell
 npm.cmd run data:seed
@@ -94,7 +93,7 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 62 tests across 16 files, including property-use classification/API/state contracts, ACRIS and ZAP safeguards, qualified-signal boundaries, refresh idempotence, investigation briefs, and normalization. The focused property-context browser workflow passed and its full-page screenshot was inspected. The full serial Playwright run passed 12 of 13 on a cold run; the one NYC brief timing failure passed with the complete four-test investigation file on immediate focused rerun.
+The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 63 tests across 16 files, including the unfiltered-window cache boundary, property-use classification/API/state contracts, ACRIS and ZAP safeguards, qualified-signal boundaries, refresh idempotence, investigation briefs, and normalization. The full serial Playwright suite passed all 13 workflows from a fresh built server in 49.1 seconds; the focused property-context screenshot was visually inspected. The initial NYC summary/cells/sources request batch measured 0.78 seconds after the final rebuild.
 
 ## Sources and further reading
 

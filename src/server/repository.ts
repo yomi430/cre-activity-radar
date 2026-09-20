@@ -35,10 +35,16 @@ export function summaryFor(db: DatabaseSync, market: Market, permitType: string,
   const typeRows = db.prepare('SELECT DISTINCT permit_type FROM permits WHERE market = ? ORDER BY permit_type').all(market) as Array<{ permit_type: string }>;
   const sourceReports = reportsFor(db, market); const approval = sbaFor(db, market);
   const filter = filterWhere(market, permitType, lens, value);
+  const selected = filters(value);
   const windowCounts = (start:string, end:string) => db.prepare(`SELECT COUNT(*) AS total, SUM(h3_cell IS NOT NULL) AS mapped
     FROM ${filter.table} WHERE market = ? AND event_date >= ? AND event_date < ?${filter.clause}`).get(market, start, end, ...filter.params) as { total:number; mapped:number|null };
-  const prior = windowCounts(WINDOWS.prior.start, WINDOWS.prior.endExclusive);
-  const current = windowCounts(WINDOWS.current.start, WINDOWS.current.endExclusive);
+  const cached = permitType === 'ALL' && lens === 'ALL' && selected.propertyUse === 'ALL' && selected.minReportedCostCents === null
+    ? db.prepare('SELECT period,total,mapped FROM permit_window_counts WHERE market=?').all(market) as Array<{period:'prior'|'current';total:number;mapped:number}>
+    : [];
+  const cachedPrior = cached.find(row => row.period === 'prior');
+  const cachedCurrent = cached.find(row => row.period === 'current');
+  const prior = cachedPrior ?? windowCounts(WINDOWS.prior.start, WINDOWS.prior.endExclusive);
+  const current = cachedCurrent ?? windowCounts(WINDOWS.current.start, WINDOWS.current.endExclusive);
   const isComparable = comparable(db, market);
   const acceptedPermits = change(current.total, prior.total, isComparable);
   const mappedPermits = change(current.mapped ?? 0, prior.mapped ?? 0, isComparable);

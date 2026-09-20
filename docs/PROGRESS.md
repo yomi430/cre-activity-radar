@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-09-20 cold-start release pass
+
+The seed now materializes only the invariant unfiltered prior/current total and mapped counts
+inside the same permit-ingest transaction. Default summaries use that snapshot cache;
+property, lens, type, and cost-filtered summaries still query their exact evidence. Cached
+values reconciled with all four Chicago/NYC permit-table windows. The initial NYC
+summary/cells/sources batch measured 0.78 seconds after rebuild. Validation passed data
+verification, typecheck, production build, 63/63 Vitest tests, and all 13 Playwright
+workflows from a fresh built server in 49.1 seconds.
+
 ## 2026-09-20 interview/demo release
 
 The release narrative now starts with the analyst decision and evidence handoff, demonstrates

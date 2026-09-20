@@ -27,6 +27,10 @@ export function createSchema(database: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS permits_market_cell_date_cost_address ON permits(market, h3_cell, event_date, reported_cost_cents, address);
     CREATE INDEX IF NOT EXISTS permits_market_type_date ON permits(market, permit_type, event_date);
     CREATE INDEX IF NOT EXISTS permits_market_date_cell ON permits(market, event_date, h3_cell);
+    CREATE TABLE IF NOT EXISTS permit_window_counts (
+      market TEXT NOT NULL, period TEXT NOT NULL, total INTEGER NOT NULL, mapped INTEGER NOT NULL,
+      PRIMARY KEY(market, period)
+    );
     -- Property use is deliberately a separate, immutable enrichment. Permit rows
     -- retain source identity and source-coordinate placement regardless of join outcome.
     CREATE TABLE IF NOT EXISTS property_use_snapshots (

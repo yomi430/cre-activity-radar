@@ -27,6 +27,25 @@ function insert(db: DatabaseSync, id: string, cell: string, cost: number | null,
 }
 
 describe('property-use and reported-cost controls', () => {
+  it('uses snapshot window counts only for the unfiltered summary and bypasses them for property filters', () => {
+    const db = database();
+    try {
+      insert(db, 'commercial-current', highMaxCell, 1_000_000, 'LIKELY_COMMERCIAL');
+      db.prepare('INSERT INTO permit_window_counts VALUES(?,?,?,?)').run('NYC', 'prior', 9, 8);
+      db.prepare('INSERT INTO permit_window_counts VALUES(?,?,?,?)').run('NYC', 'current', 10, 9);
+
+      const unfiltered = summaryFor(db, 'NYC', 'ALL', 'ALL');
+      expect(unfiltered.acceptedPermits).toMatchObject({ previous: 9, current: 10 });
+      expect(unfiltered.mappedPermits).toMatchObject({ previous: 8, current: 9 });
+
+      const filtered = summaryFor(db, 'NYC', 'ALL', 'ALL', { propertyUse: 'LIKELY_COMMERCIAL' });
+      expect(filtered.acceptedPermits).toMatchObject({ previous: 0, current: 1 });
+      expect(filtered.mappedPermits).toMatchObject({ previous: 0, current: 1 });
+    } finally {
+      db.close();
+    }
+  });
+
   it('intersects exact lens, direct property context, and individual-record cost filters across every permit result', () => {
     const db = database();
     try {
