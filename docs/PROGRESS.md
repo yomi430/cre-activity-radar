@@ -1,5 +1,17 @@
 # Progress
 
+## 2026-09-19 H3 investigation workflow
+
+Implemented global discovery filters and independent selected-H3 drill-down filters,
+URL-restorable state, latest-five recent H3 history, an automatic full-H3 composition
+breakdown, and deterministic qualified signals with transparent rule evidence and next
+checks. Qualified signals and caveats are included in evidence exports. The backend
+returns the full breakdown with each brief, avoiding browser N+1 lens requests.
+
+Validation passed: 25/25 Vitest tests, 7/7 Playwright flows, typecheck, production
+build, and desktop/mobile visual inspection. NYC ZAP remains deferred under the audited
+contracts in `ZAP_LIVE_AUDIT.md` and `ZAP_REFRESH_RECONCILIATION.md`.
+
 ## 2026-09-19 final value workflow
 
 The planned release is complete except for the separately deferred NYC ZAP entitlement
