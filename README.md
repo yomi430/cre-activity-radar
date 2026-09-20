@@ -10,7 +10,7 @@ The working hypothesis is that analysts benefit from transparent, count-based tr
 
 ## What it builds
 
-The application supports the same local investigation workflow for **Chicago** and **New York City**. City discovery contains the permit queue and heatmap; selecting an area opens Research workspace. Research combines the active H3 with the latest five navigation visits and the separate, deliberate Signal Inventory. **Back to whole city** clears the H3 while preserving global filters. NYC entitlements, Data & methods, and Data Operations have focused pages instead of competing for space on discovery. Analysts can record a disposition and note, recall/filter/remove a lead, and export either one evidence packet or the parked-lead portfolio as JSON/HTML. Queue candidates are never saved automatically. Source-health panels report accepted, rejected, duplicate, out-of-scope, mapped, and unmapped rows so a viewer can assess coverage before interpreting a change.
+The application supports the same local investigation workflow for **Chicago** and **New York City**. City discovery contains the permit queue and heatmap; selecting an area opens Research workspace. Research combines the active H3 with the latest five navigation visits and the separate, deliberate Signal Inventory. **Back to whole city** clears the H3 while preserving global filters. NYC entitlements, NYC recorded deeds, Data & methods, and Data Operations have focused pages instead of competing for space on discovery. Analysts can record a disposition and note, recall/filter/remove a lead, and export either one evidence packet or the parked-lead portfolio as JSON/HTML. Queue candidates are never saved automatically. Source-health panels report accepted, rejected, duplicate, out-of-scope, mapped, and unmapped rows so a viewer can assess coverage before interpreting a change.
 
 This is a product hypothesis, formed from desk research and the constraints of public data. No analyst interviews, adoption study, predictive validation, or measured time savings are claimed. The intended workflow and its explicit limits are in [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md).
 
@@ -25,6 +25,13 @@ The bundled ZAP fixture demonstrates the integration and must not be described a
 or complete current ZAP snapshot. Live acquisition writes immutable checksummed snapshots,
 validates row completeness, rebuilds an isolated database, and advances the active pointer
 only after success. An unchanged publisher version returns `UP_TO_DATE` without rebuilding.
+
+NYC also has a separate ACRIS recorded-deed evidence page. It includes only exact raw
+`DEED` records, counts distinct document IDs, preserves multi-BBL associations, and places
+only coordinate-bearing PLUTO matches at parcel-centroid precision. It explicitly excludes
+Staten Island, never presents `document_amt` as a sale price, and never changes the permit
+queue. The bundled fixture proves the integration; **Refresh NYC recorded deeds** or
+`npm.cmd run data:fetch:acris` performs the guarded official-source refresh.
 
 The comparison windows are fixed for reproducibility:
 
@@ -71,7 +78,7 @@ For a built local demo:
 npm.cmd run demo
 ```
 
-Useful data commands are `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap`, `data:bundle-demo`, `data:seed`, and `data:verify`. Permit fetches query the fixed windows, freeze selected source fields, and reconcile source counts before keeping a snapshot. The ZAP fetch polls official NYC metadata, pages Project Data and BBL associations, fetches only referenced PLUTO parcels, and preserves retained snapshots for cautious change detection. `data:fetch:sba` remains an explicit source-acquisition task; the verified SBA CSV may instead be supplied under `data/raw/` and is then ingested as borrower-city context.
+Useful data commands are `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap`, `data:fetch:acris`, `data:bundle-demo`, `data:seed`, and `data:verify`. Permit fetches query the fixed windows, freeze selected source fields, and reconcile source counts before keeping a snapshot. The ZAP fetch polls official NYC metadata, pages Project Data and BBL associations, fetches only referenced PLUTO parcels, and preserves retained snapshots for cautious change detection. `data:fetch:sba` remains an explicit source-acquisition task; the verified SBA CSV may instead be supplied under `data/raw/` and is then ingested as borrower-city context.
 
 ## Validation status
 
@@ -86,7 +93,7 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 40 tests across nine files, including ZAP pagination, checksum and history safeguards, qualified-signal boundaries, lens coverage and fallback, refresh idempotence and stages, persisted jobs, investigation briefs, and normalization. API smoke passed for both markets; it reported Chicago current/prior permit totals of 31,555/31,927 and NYC totals of 168,852/166,122. These are source-record counts for the stated datasets, not findings about project starts or investment. Playwright passed all eight workflows, including two-city desktop investigation, persistent H3 drill-down, URL/recent-history restoration, zero-match recovery, mobile, Signal Inventory park/filter/export/recall/remove, and Data Operations. Desktop and mobile screenshots were visually inspected.
+The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 56 tests across 13 files, including ACRIS exact-type, duplicate, multi-BBL, PLUTO coverage, pagination and atomic-refresh safeguards; ZAP pagination and history safeguards; qualified-signal boundaries; lens coverage; refresh idempotence; persisted jobs; investigation briefs; and normalization. API smoke passed for both markets; it reported Chicago current/prior permit totals of 31,555/31,927 and NYC totals of 168,852/166,122. These are source-record counts for the stated datasets, not findings about project starts or investment. Playwright passed all 12 workflows, including two-city desktop investigation, persistent H3 drill-down, URL/recent-history restoration, zero-match recovery, mobile, Signal Inventory park/filter/export/recall/remove, and Data Operations. Desktop and mobile screenshots were visually inspected.
 
 ## Sources and further reading
 

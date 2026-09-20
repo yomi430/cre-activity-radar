@@ -83,8 +83,7 @@ test('opens data operations and reports the seeded pipeline', async ({ page }) =
 });
 
 test('keeps NYC recorded-deed context separate, disclosed, and exportable', async ({ page }) => {
-  await page.goto('/?market=NYC');
-  await page.locator('.app-nav').getByRole('button', { name: 'Recorded deeds', exact: true }).click();
+  await page.goto('/?market=NYC&page=recorded-deeds');
   await expect(page.getByRole('heading', { name: 'NYC recorded deeds' })).toBeVisible();
   await expect(page.getByText('ACRIS recorded-deed context: four boroughs; Staten Island is not covered.')).toBeVisible();
   await expect(page.getByText('Exact raw DEED only')).toBeVisible();
@@ -98,6 +97,7 @@ test('keeps NYC recorded-deed context separate, disclosed, and exportable', asyn
   const htmlDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export deed evidence' }).click();
   expect((await htmlDownload).suggestedFilename()).toMatch(/^nyc-acris-recorded-deeds-.*\.html$/);
+  await page.screenshot({ path: 'test-results/nyc-recorded-deeds.png', fullPage: true });
 
   await page.getByRole('button', { name: 'Data operations', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Refresh NYC recorded deeds' })).toBeEnabled();

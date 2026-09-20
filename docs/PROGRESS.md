@@ -1,5 +1,16 @@
 # Progress
 
+## 2026-09-20 NYC ACRIS recorded-deed evidence
+
+The bounded four-borough ACRIS recorded-deed evidence family is implemented. It uses exact
+raw `DEED`, distinct-document counts, rights-aware Legal/BBL associations, conservative
+duplicate handling, PLUTO parcel-centroid H3 placement, immutable staged snapshots, atomic
+activation, Data Operations refresh, document lookup, and JSON/HTML exports. The UI states
+that Staten Island is excluded and `document_amt` is not a sale price; deeds remain separate
+from permit ranking and ZAP. Final validation passed: seed twice, 56/56 Vitest tests,
+TypeScript, production build, ACRIS API smoke, 12/12 Playwright workflows, and desktop
+screenshot inspection.
+
 ## 2026-09-20 NYC ACRIS frozen audit
 
 The fixed-window official ACRIS Master/Legals and BBL-scoped PLUTO audit is complete and

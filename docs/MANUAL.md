@@ -6,7 +6,7 @@ Use **City discovery** to choose market-wide filters, compare ranked H3 areas, a
 
 Research contains two browser-local memory tools. **Recently viewed areas** keeps the latest five H3 visits for navigation and shows each H3 ID. **Signal inventory** contains only leads deliberately saved with a disposition or note. Opening either restores its market and H3 context; clearing recent history does not delete saved signals.
 
-For NYC, **NYC entitlements** contains ZAP as a separate earlier-stage layer. **Data & methods** explains every CRE lens and exact source mapping, source quality, and SBA context. **Data operations** contains controlled refresh and verification jobs.
+For NYC, **NYC entitlements** contains ZAP as a separate earlier-stage layer. **Recorded deeds** contains four-borough ACRIS deed evidence as a separate ownership-research context. **Data & methods** explains every CRE lens and exact source mapping, source quality, and SBA context. **Data operations** contains controlled refresh and verification jobs.
 
 This manual helps a CRE analyst use the prototype to decide which recorded permit activity deserves a closer look. It does not provide an AI chatbot, an answer engine, a forecast, a property valuation, or a recommendation. It makes the evidence behind a narrow, repeatable first pass easy to inspect.
 
@@ -22,6 +22,7 @@ The comparison is always **Jul 2025–Jun 2026** (`[2025-07-01, 2026-07-01)`) ve
 | “Which records created this area count?” | [Evidence and provenance](#evidence-and-provenance) |
 | “Can I trust this source or map coverage?” | [Source quality](#source-quality-and-accounting) |
 | “Does SBA financing support this cell?” | [SBA context](#sba-504-context-is-separate) |
+| “What recorded-deed evidence is available in NYC?” | [NYC recorded deeds](#nyc-recorded-deeds) |
 | “What exactly does a permit or dollar amount mean?” | [Data semantics](#exact-data-semantics) |
 | “Why is the app empty or the map not visible?” | [Troubleshooting](#troubleshooting) |
 | “Can I inspect the data programmatically?” | [API examples](#api-examples) |
@@ -60,6 +61,16 @@ Select **Chicago**. Chicago area counts come from City of Chicago Building Permi
 ### New York City
 
 Select **New York City**. Changing market resets the type filter to All types and clears the selected area, so stale Chicago evidence cannot be carried into NYC. Repeat the same selection and evidence flow. The record dialog links to NYC DOB NOW: Build. Its coverage differs from Chicago’s source, so use the app to investigate within NYC and do not create a cross-city cell ranking.
+
+### NYC recorded deeds
+
+Open **Recorded deeds** after selecting New York City. The page counts distinct ACRIS
+document IDs whose raw type is exactly `DEED`, shows multi-BBL and PLUTO-match quality,
+lists parcel-centroid H3 placements, and can look up a retained document ID. Use it to decide
+what property or ownership research to do next. Do not sum H3 rows into a city total: one
+multi-BBL deed can appear in more than one cell. ACRIS covers Manhattan, Bronx, Brooklyn,
+and Queens; Staten Island is outside this source. `document_amt` is debt or obligation and
+is never shown as sale price. JSON and HTML exports preserve these limitations.
 
 <details>
 <summary>Can I compare a Chicago cell directly with an NYC cell?</summary>

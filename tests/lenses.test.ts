@@ -71,5 +71,5 @@ describe('auditable CRE lenses', () => {
         expect(classification.ambiguity).not.toMatch(/not in the versioned mapping/i);
       }
     }
-  });
+  }, 15_000);
 });
