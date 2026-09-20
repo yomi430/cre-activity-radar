@@ -34,7 +34,7 @@ export function rebuildDatabase({ databasePath = process.env.RADAR_DB_PATH ?? re
     atomicReplace(staged, active);
     console.log('DATABASE_REBUILT');
   } finally {
-    if (existsSync(staged)) rmSync(staged, { force: true });
+    for (const artifact of [staged, `${staged}-journal`, `${staged}-wal`, `${staged}-shm`]) if (existsSync(artifact)) rmSync(artifact, { force: true });
   }
 }
 

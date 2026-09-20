@@ -78,7 +78,7 @@ export async function fetchSnapshot(market, { rawDirectory = resolve('data/raw')
     if (rows !== publisher.rows) throw new Error(`count mismatch: expected ${publisher.rows}, got ${rows}`);
     const finalPublisher = await publisherState(market, fetchImpl);
     if (finalPublisher.rows !== publisher.rows || finalPublisher.latestEventDate !== publisher.latestEventDate) throw new Error('source changed during extraction; previous snapshot was retained');
-    const nextManifest = { source: config.source, retrievedAt: new Date().toISOString(), coverageStart: coverage.start, coverageEndExclusive: coverage.endExclusive, expectedRows: rows, rows, sha256: digest.digest('hex'), publisherLatestEventDate: publisher.latestEventDate, resourceUrl: config.base, completeness: 'complete-query' };
+    const nextManifest = { source: config.source, retrievedAt: new Date().toISOString(), coverageStart: coverage.start, coverageEndExclusive: coverage.endExclusive, expectedRows: rows, rows, sha256: digest.digest('hex'), publisherLatestEventDate: publisher.latestEventDate, publisherLatestPublishedDate: publisher.latestPublishedDate, resourceUrl: config.base, completeness: 'complete-query' };
     writeFileSync(manifestStaging, JSON.stringify(nextManifest, null, 2)); replaceSnapshot(snapshot, manifest, staging, manifestStaging, token); log(`STAGED_SNAPSHOT ${market} ${nextManifest.sha256} ${rows}`); return nextManifest;
   } catch (error) { stream.destroy(); for (const file of [staging, manifestStaging]) if (existsSync(file)) unlinkSync(file); throw error; }
 }

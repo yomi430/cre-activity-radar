@@ -9,10 +9,13 @@ const sidecars: Partial<Record<SourceReport['source'], string>> = {
   CHICAGO_PERMIT: resolve('data/raw/chicago-permits-2024-07-01_2026-07-01.jsonl.manifest.json'),
   NYC_DOB_NOW: resolve('data/raw/nyc-permits-2024-07-01_2026-07-01.jsonl.manifest.json'),
 };
-function checksumFor(source: SourceReport['source']): string | null {
+function sidecarFor(source: SourceReport['source']): { sha256: string | null; publisherLatestPublishedDate: string | null } {
   const path = sidecars[source];
-  if (!path || !existsSync(path)) return null;
-  try { const parsed = JSON.parse(readFileSync(path, 'utf8')) as { sha256?: unknown }; return typeof parsed.sha256 === 'string' ? parsed.sha256 : null; } catch { return null; }
+  if (!path || !existsSync(path)) return { sha256: null, publisherLatestPublishedDate: null };
+  try {
+    const parsed = JSON.parse(readFileSync(path, 'utf8')) as { sha256?: unknown; publisherLatestPublishedDate?: unknown };
+    return { sha256: typeof parsed.sha256 === 'string' ? parsed.sha256 : null, publisherLatestPublishedDate: typeof parsed.publisherLatestPublishedDate === 'string' ? parsed.publisherLatestPublishedDate : null };
+  } catch { return { sha256: null, publisherLatestPublishedDate: null }; }
 }
 
 export function pipelineFor(jobs: AdminJobManager): PipelineStatus {
@@ -26,13 +29,15 @@ export function pipelineFor(jobs: AdminJobManager): PipelineStatus {
       const rawManifest = dataset ? JSON.parse(dataset.manifest_json) as { mode?: unknown; coverageStart?: unknown; coverageEndExclusive?: unknown } : null;
       manifest = { mode: typeof rawManifest?.mode === 'string' ? rawManifest.mode : 'unknown', coverageStart: typeof rawManifest?.coverageStart === 'string' ? rawManifest.coverageStart : null, coverageEndExclusive: typeof rawManifest?.coverageEndExclusive === 'string' ? rawManifest.coverageEndExclusive : null, importedAt: dataset?.imported_at ?? null };
       for (const market of ['CHICAGO', 'NYC'] as const) {
-        sources.push(...reportsFor(database, market).map(report => ({
+        sources.push(...reportsFor(database, market).map(report => {
+          const sidecar = sidecarFor(report.source);
+          return ({
           source: report.source, market: report.market, status: report.status, completeness: report.completeness,
-          retrievedAt: report.retrievedAt, publisherAsOf: report.publisherAsOf,
+          retrievedAt: report.retrievedAt, publisherAsOf: sidecar.publisherLatestPublishedDate ?? report.publisherAsOf,
           coverageStart: manifest?.coverageStart ?? null, coverageEndExclusive: manifest?.coverageEndExclusive ?? null,
           acceptedRows: report.acceptedRows, resolvedRows: report.resolvedRows, unresolvedRows: report.unresolvedRows,
-          missingCostRows: report.missingCostRows, checksum: checksumFor(report.source),
-        })));
+          missingCostRows: report.missingCostRows, checksum: sidecar.sha256,
+        }); }));
       }
     } finally { database.close(); }
   }

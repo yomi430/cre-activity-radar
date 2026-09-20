@@ -18,7 +18,11 @@ const commands: Record<AdminJobAction, { executable: string; args: string[] }> =
 export type SpawnCommand = (command: string, args: string[], options: { cwd: string; shell: false; stdio: ['ignore', 'pipe', 'pipe'] }) => ChildProcess;
 function boundedAppend(existing: string, chunk: string) { return `${existing}${chunk}`.slice(-outputLimit); }
 function isJob(value: unknown): value is AdminJob {
-  return typeof value === 'object' && value !== null && typeof (value as AdminJob).id === 'string' && typeof (value as AdminJob).action === 'string';
+  return typeof value === 'object' && value !== null && typeof (value as AdminJob).id === 'string' && typeof (value as AdminJob).action === 'string' && ['RUNNING', 'SUCCEEDED', 'FAILED', 'INTERRUPTED'].includes((value as AdminJob).status);
+}
+function restoredJob(value: AdminJob): AdminJob {
+  const status = value.status === 'RUNNING' ? 'INTERRUPTED' : value.status;
+  return { ...value, status, stage: typeof value.stage === 'string' ? value.stage : status === 'SUCCEEDED' ? 'COMPLETE' : status, outcome: value.outcome === 'UP_TO_DATE' || value.outcome === 'UPDATED' ? value.outcome : null, finishedAt: value.status === 'RUNNING' ? new Date().toISOString() : value.finishedAt, note: value.status === 'RUNNING' ? 'The local server restarted while this job was running; process state is not durable.' : value.note };
 }
 
 /** Local process runner with an explicit command allowlist. It never accepts a command or path from HTTP input. */
@@ -28,6 +32,7 @@ export class AdminJobManager {
   private readonly spawnCommand: SpawnCommand;
   private readonly workingDirectory: string;
   private readonly persistencePath: string;
+  private stageTail = '';
 
   constructor(options: { spawnCommand?: SpawnCommand; workingDirectory?: string; persistencePath?: string } = {}) {
     this.spawnCommand = options.spawnCommand ?? ((command, args, spawnOptions) => spawn(command, args, spawnOptions));
@@ -41,6 +46,7 @@ export class AdminJobManager {
     if (this.current) return null;
     const command = commands[action];
     const job: AdminJob = { id: randomUUID(), action, status: 'RUNNING', stage: 'QUEUED', outcome: null, startedAt: new Date().toISOString(), finishedAt: null, exitCode: null, stdout: '', stderr: '', outputTruncated: false, note: null };
+    this.stageTail = '';
     this.current = job;
     this.persist(job);
     let child: ChildProcess;
@@ -50,7 +56,7 @@ export class AdminJobManager {
       this.finish(job, 'FAILED', null, `Could not start allowlisted job: ${error instanceof Error ? error.message : String(error)}`);
       return job;
     }
-    child.stdout?.on('data', chunk => { const text = String(chunk); const next = boundedAppend(job.stdout, text); job.outputTruncated ||= next.length < job.stdout.length + text.length; job.stdout = next; this.applyStage(job, next); this.persist(job); });
+    child.stdout?.on('data', chunk => { const text = String(chunk); const next = boundedAppend(job.stdout, text); job.outputTruncated ||= next.length < job.stdout.length + text.length; job.stdout = next; this.applyStage(job, text); this.persist(job); });
     child.stderr?.on('data', chunk => { const next = boundedAppend(job.stderr, String(chunk)); job.outputTruncated ||= next.length < job.stderr.length + String(chunk).length; job.stderr = next; this.persist(job); });
     child.once('error', error => this.finish(job, 'FAILED', null, error.message));
     child.once('close', code => this.finish(job, code === 0 ? 'SUCCEEDED' : 'FAILED', code, null));
@@ -58,13 +64,16 @@ export class AdminJobManager {
   }
   private finish(job: AdminJob, status: AdminJob['status'], exitCode: number | null, note: string | null) {
     if (job.finishedAt) return;
+    this.applyStage(job, '\n');
     job.status = status; job.stage = status === 'SUCCEEDED' ? 'COMPLETE' : status === 'FAILED' ? 'FAILED' : job.stage; job.exitCode = exitCode; job.finishedAt = new Date().toISOString(); job.note = note;
     this.last = job;
     if (this.current?.id === job.id) this.current = null;
     this.persist(job);
   }
   private applyStage(job: AdminJob, output: string) {
-    for (const line of output.split(/\r?\n/)) {
+    const lines = `${this.stageTail}${output}`.split(/\r?\n/);
+    this.stageTail = lines.pop()?.slice(-256) ?? '';
+    for (const line of lines) {
       const stage = /^STAGE ([A-Z_]+)/.exec(line); if (stage) job.stage = stage[1];
       const outcome = /^OUTCOME (UP_TO_DATE|UPDATED)/.exec(line); if (outcome) job.outcome = outcome[1] as AdminJob['outcome'];
     }
@@ -73,8 +82,8 @@ export class AdminJobManager {
     try {
       const parsed = JSON.parse(readFileSync(this.persistencePath, 'utf8')) as unknown;
       if (!isJob(parsed)) return;
-      this.last = parsed.status === 'RUNNING' ? { ...parsed, status: 'INTERRUPTED', finishedAt: new Date().toISOString(), note: 'The local server restarted while this job was running; process state is not durable.' } : parsed;
-      if (this.last.status === 'INTERRUPTED') this.persist(this.last);
+      this.last = restoredJob(parsed);
+      if (parsed.status === 'RUNNING' || typeof parsed.stage !== 'string' || (parsed.outcome !== null && parsed.outcome !== 'UP_TO_DATE' && parsed.outcome !== 'UPDATED')) this.persist(this.last);
     } catch { /* No previous local job log is a normal first-run state. */ }
   }
   private persist(job: AdminJob) {

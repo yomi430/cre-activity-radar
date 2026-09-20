@@ -32,6 +32,20 @@ describe('local admin jobs', () => {
     expect(JSON.parse(readFileSync(join(root, 'jobs.json'), 'utf8'))).toMatchObject({ status: 'SUCCEEDED' });
   });
 
+  it('persists fixture job stages, outcomes, stderr, and bounded logs without running a network refresh', () => {
+    const child = new FakeChild(); const root = mkdtempSync(join(tmpdir(), 'radar-admin-')); const persistencePath = join(root, 'jobs.json');
+    const jobs = new AdminJobManager({ spawnCommand: (() => child as unknown as ChildProcess) as SpawnCommand, persistencePath });
+    const job = jobs.start('REFRESH_NYC');
+    child.stdout.emit('data', 'STAGE CHECKING_PUBLISHER\n');
+    child.stdout.emit('data', `OUTCOME UP_TO_DATE\n${'x'.repeat(33_000)}`);
+    child.stderr.emit('data', 'fixture publisher warning\n');
+    expect(jobs.status().currentJob).toMatchObject({ id: job?.id, status: 'RUNNING', stage: 'CHECKING_PUBLISHER', outcome: 'UP_TO_DATE', outputTruncated: true, stderr: 'fixture publisher warning\n' });
+    child.emit('close', 0);
+    const persisted = JSON.parse(readFileSync(persistencePath, 'utf8'));
+    expect(persisted).toMatchObject({ id: job?.id, status: 'SUCCEEDED', stage: 'COMPLETE', outcome: 'UP_TO_DATE', outputTruncated: true, stderr: 'fixture publisher warning\n' });
+    expect(persisted.stdout.length).toBe(32_000);
+  });
+
   it('rejects arbitrary action strings before spawning a command', () => {
     let spawned = false;
     const jobs = new AdminJobManager({ spawnCommand: (() => { spawned = true; throw new Error('must not run'); }) as SpawnCommand, persistencePath: join(mkdtempSync(join(tmpdir(), 'radar-admin-')), 'jobs.json') });
