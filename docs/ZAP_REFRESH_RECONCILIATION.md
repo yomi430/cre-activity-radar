@@ -45,3 +45,20 @@ Complete this section after two distinct publisher versions are available:
 
 The implementation may initially use complete-snapshot upserts plus soft removal flags;
 it must never infer deletion from an interrupted or incomplete fetch.
+
+## Required UI disclosure
+
+When the NYC ZAP section is built, show this disclosure beside its source quality or
+coverage details, with an accessible explanation available without opening developer
+tools:
+
+> NYC DCP publishes the current project-to-tax-lot association snapshot. This prototype
+> has not yet observed enough publisher versions to determine whether a missing
+> association was removed, replaced, or temporarily omitted. Previously observed
+> associations are therefore flagged for review rather than immediately deleted.
+
+The UI must also display the ZAP snapshot retrieval time, publisher update time,
+unvalidated BBL count, PLUTO-unmatched count, coordinate-null count, and count of
+`POSSIBLY_REMOVED` associations. If no prior snapshot exists, display **Change history
+not yet available** rather than showing zero removals. This limitation belongs in the
+ZAP panel and exported evidence packet; it must not be hidden only in documentation.
