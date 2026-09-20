@@ -10,6 +10,7 @@ const outputLimit = 32_000;
 const commands: Record<AdminJobAction, { executable: string; args: string[] }> = {
   REFRESH_CHICAGO: { executable: process.execPath, args: ['scripts/refresh-market.mjs', 'chicago'] },
   REFRESH_NYC: { executable: process.execPath, args: ['scripts/refresh-market.mjs', 'nyc'] },
+  REFRESH_ZAP: { executable: process.execPath, args: ['scripts/refresh-zap.mjs'] },
   REFRESH_SBA: { executable: process.execPath, args: ['scripts/fetch-sba.mjs'] },
   REBUILD_DATABASE: { executable: process.execPath, args: ['scripts/rebuild-database.mjs'] },
   VERIFY_DATASET: { executable: process.execPath, args: ['scripts/verify-data.mjs'] },

@@ -303,7 +303,7 @@ export interface InvestigationBrief {
   recommendedNextChecks: string[];
 }
 
-export const adminJobActions = ['REFRESH_CHICAGO', 'REFRESH_NYC', 'REFRESH_SBA', 'REBUILD_DATABASE', 'VERIFY_DATASET'] as const;
+export const adminJobActions = ['REFRESH_CHICAGO', 'REFRESH_NYC', 'REFRESH_ZAP', 'REFRESH_SBA', 'REBUILD_DATABASE', 'VERIFY_DATASET'] as const;
 export type AdminJobAction = (typeof adminJobActions)[number];
 export const adminJobActionSchema = z.enum(adminJobActions);
 export interface AdminJob {
