@@ -54,6 +54,21 @@ describe('local admin jobs', () => {
     expect(spawned).toBe(false);
   });
 
+  it('allowlists the ZAP refresh script and persists its distinct refresh stages', () => {
+    const calls: Array<{ command: string; args: string[]; shell: boolean }> = [];
+    const child = new FakeChild(); const root = mkdtempSync(join(tmpdir(), 'radar-admin-zap-'));
+    const jobs = new AdminJobManager({
+      spawnCommand: ((command, args, options) => { calls.push({ command, args, shell: options.shell }); return child as unknown as ChildProcess; }) as SpawnCommand,
+      persistencePath: join(root, 'jobs.json'),
+    });
+    expect(adminJobActionSchema.safeParse('REFRESH_ZAP').success).toBe(true);
+    const job = jobs.start('REFRESH_ZAP');
+    expect(calls).toEqual([{ command: process.execPath, args: ['scripts/refresh-zap.mjs'], shell: false }]);
+    child.stdout.emit('data', 'STAGE CHECKING_PUBLISHER\nSTAGE FETCHING_ZAP_SNAPSHOT\nSTAGE VALIDATED_ZAP_SNAPSHOT\nOUTCOME UPDATED\n');
+    child.emit('close', 0);
+    expect(jobs.status().lastJob).toMatchObject({ id: job?.id, action: 'REFRESH_ZAP', status: 'SUCCEEDED', stage: 'COMPLETE', outcome: 'UPDATED' });
+  });
+
   it('returns validation and one-at-a-time conflict responses from the local API', async () => {
     const child = new FakeChild();
     const root = mkdtempSync(join(tmpdir(), 'radar-admin-'));
