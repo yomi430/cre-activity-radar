@@ -13,6 +13,24 @@ export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export type Period = 'current' | 'prior';
 export type Source = 'CHICAGO_PERMIT' | 'NYC_DOB_NOW' | 'SBA_504';
 
+/** NYC ACRIS is a bounded, separate recorded-deed evidence family. */
+export interface AcrisSourceMetadata {
+  source: 'NYC_ACRIS_MASTER' | 'NYC_ACRIS_LEGALS' | 'NYC_PLUTO'; datasetId: 'bnx9-e6tj' | '8h5j-fqxa' | '64uk-42ks';
+  datasetUrl: string; publisherUpdatedAt: string | null; retrievedAt: string; snapshotId: string; caveat: string;
+}
+export interface AcrisQuality {
+  masterRows: number; acceptedDocuments: number; duplicateMasterRows: number; excludedRawTypeCounts: Record<string, number>;
+  legalRows: number; duplicateLegalRows: number; invalidBblRows: number; deedsWithoutLegals: number;
+  distinctLegalBbls: number; unmatchedBbls: number; plutoUnmatchedBbl: number; nullCoordinateBbls: number; coordinateNull: number; placedDocumentCells: number;
+  multiBblDocuments: number; caveats: string[];
+}
+export interface AcrisDocumentEvidence {
+  documentId: string; recordedDate: string; documentDate: string | null; docType: 'DEED'; bbls: string[];
+  h3Cells: string[]; placementPrecision: 'PARCEL_CENTROID' | null; documentAmountDisclosure: 'NOT_A_SALE_PRICE';
+}
+export interface AcrisCellCount { h3Cell: string; documentCount: number; precision: 'PARCEL_CENTROID'; }
+export interface AcrisSummaryData { window: { startInclusive: string; endExclusive: string }; distinctDocuments: number; cells: AcrisCellCount[]; quality: AcrisQuality; sources: AcrisSourceMetadata[]; permitRankingTreatment: 'SEPARATE_RECORDED_DEED_CONTEXT'; disclosure: string; }
+
 /** NYC ZAP is an entitlement-stage source. It must never be blended into permit ranking. */
 export const zapWindowIds = ['ALL_RECORDS', 'FILED_24_MONTHS'] as const;
 export const zapWindowSchema = z.enum(zapWindowIds);
@@ -303,7 +321,7 @@ export interface InvestigationBrief {
   recommendedNextChecks: string[];
 }
 
-export const adminJobActions = ['REFRESH_CHICAGO', 'REFRESH_NYC', 'REFRESH_ZAP', 'REFRESH_SBA', 'REBUILD_DATABASE', 'VERIFY_DATASET'] as const;
+export const adminJobActions = ['REFRESH_CHICAGO', 'REFRESH_NYC', 'REFRESH_ZAP', 'REFRESH_ACRIS', 'REFRESH_SBA', 'REBUILD_DATABASE', 'VERIFY_DATASET'] as const;
 export type AdminJobAction = (typeof adminJobActions)[number];
 export const adminJobActionSchema = z.enum(adminJobActions);
 export interface AdminJob {

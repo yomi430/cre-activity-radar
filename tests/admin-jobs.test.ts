@@ -69,6 +69,21 @@ describe('local admin jobs', () => {
     expect(jobs.status().lastJob).toMatchObject({ id: job?.id, action: 'REFRESH_ZAP', status: 'SUCCEEDED', stage: 'COMPLETE', outcome: 'UPDATED' });
   });
 
+  it('allowlists the recorded-deed refresh script and preserves its staged outcome', () => {
+    const calls: Array<{ command: string; args: string[]; shell: boolean }> = [];
+    const child = new FakeChild(); const root = mkdtempSync(join(tmpdir(), 'radar-admin-acris-'));
+    const jobs = new AdminJobManager({
+      spawnCommand: ((command, args, options) => { calls.push({ command, args, shell: options.shell }); return child as unknown as ChildProcess; }) as SpawnCommand,
+      persistencePath: join(root, 'jobs.json'),
+    });
+    expect(adminJobActionSchema.safeParse('REFRESH_ACRIS').success).toBe(true);
+    const job = jobs.start('REFRESH_ACRIS');
+    expect(calls).toEqual([{ command: process.execPath, args: ['scripts/refresh-acris.mjs'], shell: false }]);
+    child.stdout.emit('data', 'STAGE REUSING_ACRIS_SNAPSHOT snapshot=staged\nSTAGE REBUILDING_DATABASE\nOUTCOME UPDATED\n');
+    child.emit('close', 0);
+    expect(jobs.status().lastJob).toMatchObject({ id: job?.id, action: 'REFRESH_ACRIS', status: 'SUCCEEDED', stage: 'COMPLETE', outcome: 'UPDATED' });
+  });
+
   it('returns validation and one-at-a-time conflict responses from the local API', async () => {
     const child = new FakeChild();
     const root = mkdtempSync(join(tmpdir(), 'radar-admin-'));

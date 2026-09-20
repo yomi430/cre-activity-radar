@@ -9,6 +9,7 @@ import { getResolution, isValidCell } from 'h3-js';
 import { AdminJobManager } from './jobs.js';
 import { pipelineFor } from './pipeline.js';
 import { zapCellsFor, zapSummaryFor } from './zap.js';
+import { acrisDocumentFor, acrisSummaryFor } from './acris.js';
 
 function error(response: express.Response, status: number, message: string) { return response.status(status).json({ error: { code: status === 400 ? 'VALIDATION' : 'NOT_FOUND', message } }); }
 function market(request: express.Request, response: express.Response) { const parsed = marketSchema.safeParse(request.query.market); if (!parsed.success) { error(response, 400, 'market must be CHICAGO or NYC.'); return null; } return parsed.data; }
@@ -40,6 +41,11 @@ export function createApp(options: { jobs?: AdminJobManager } = {}) {
   // permit ranking functions and accept no permit type/lens filters.
   app.get('/api/zap/summary', (request, response) => { const window = zapWindow(request, response); if (!window) return; withDatabase(response, (database, datasetId) => response.json({ datasetId, market: 'NYC', data: zapSummaryFor(database, window) })); });
   app.get('/api/zap/cells', (request, response) => { const window = zapWindow(request, response); if (!window) return; withDatabase(response, (database, datasetId) => response.json({ datasetId, market: 'NYC', data: zapCellsFor(database, window) })); });
+  // Recorded deeds are evidence only: they do not touch permit scoring or queue ranking.
+  const noTransactionQuery = (request: express.Request, response: express.Response) => { if (Object.keys(request.query).length) { error(response, 400, 'NYC recorded-deed routes have a fixed [2024-07-01, 2026-07-01) scope and accept no query parameters.'); return false; } return true; };
+  app.get('/api/transactions/nyc/summary', (request, response) => { if (!noTransactionQuery(request,response)) return; return withDatabase(response, (database, datasetId) => response.json({ datasetId, market: 'NYC', data: acrisSummaryFor(database) })); });
+  app.get('/api/transactions/nyc/cells', (request, response) => { if (!noTransactionQuery(request,response)) return; return withDatabase(response, (database, datasetId) => response.json({ datasetId, market: 'NYC', data: acrisSummaryFor(database).cells })); });
+  app.get('/api/transactions/nyc/documents/:documentId', (request, response) => { if (!noTransactionQuery(request,response)) return; return withDatabase(response, (database, datasetId) => { const data = acrisDocumentFor(database, request.params.documentId); return data ? response.json({ datasetId, market: 'NYC', data }) : error(response, 404, 'Recorded deed not found.'); }); });
   app.get('/api/admin/pipeline', (_request, response) => { const data = pipelineFor(jobs); return response.json({ datasetId: data.datasetId, data }); });
   app.post('/api/admin/jobs', (request, response) => {
     const parsed = adminJobActionSchema.safeParse(request.body?.action);

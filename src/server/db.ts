@@ -57,6 +57,26 @@ export function createSchema(database: DatabaseSync): void {
       snapshot_id TEXT NOT NULL, kind TEXT NOT NULL, row_count INTEGER NOT NULL,
       PRIMARY KEY(snapshot_id, kind), FOREIGN KEY(snapshot_id) REFERENCES zap_snapshots(snapshot_id)
     );
+    CREATE TABLE IF NOT EXISTS acris_snapshots (
+      snapshot_id TEXT PRIMARY KEY, retrieved_at TEXT NOT NULL, master_updated_at TEXT, legals_updated_at TEXT, pluto_updated_at TEXT,
+      master_rows INTEGER NOT NULL, legal_rows INTEGER NOT NULL, pluto_rows INTEGER NOT NULL, complete INTEGER NOT NULL, manifest_json TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS acris_documents (
+      document_id TEXT PRIMARY KEY, recorded_date TEXT NOT NULL, document_date TEXT, raw_json TEXT NOT NULL, snapshot_id TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS acris_legal_associations (
+      association_id TEXT PRIMARY KEY, document_id TEXT NOT NULL, bbl TEXT, easement TEXT NOT NULL, partial_lot TEXT NOT NULL, air_rights TEXT NOT NULL, subterranean_rights TEXT NOT NULL, raw_json TEXT NOT NULL,
+      FOREIGN KEY(document_id) REFERENCES acris_documents(document_id)
+    );
+    CREATE TABLE IF NOT EXISTS acris_parcels (
+      bbl TEXT PRIMARY KEY, lat REAL, lng REAL, h3_cell TEXT, raw_json TEXT NOT NULL, snapshot_id TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS acris_document_cells (
+      document_id TEXT NOT NULL, h3_cell TEXT NOT NULL, precision TEXT NOT NULL, PRIMARY KEY(document_id,h3_cell), FOREIGN KEY(document_id) REFERENCES acris_documents(document_id)
+    );
+    CREATE TABLE IF NOT EXISTS acris_quality (snapshot_id TEXT NOT NULL, kind TEXT NOT NULL, value_json TEXT NOT NULL, PRIMARY KEY(snapshot_id,kind));
+    CREATE INDEX IF NOT EXISTS acris_documents_recorded_date ON acris_documents(recorded_date);
+    CREATE INDEX IF NOT EXISTS acris_document_cells_cell ON acris_document_cells(h3_cell);
   `);
 }
 

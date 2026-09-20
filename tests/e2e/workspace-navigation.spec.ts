@@ -50,11 +50,29 @@ test.describe('workspace navigation', () => {
     await expect(page.getByRole('list', { name: 'Recently viewed H3 areas' })).toContainText(selectedCell ?? '');
   });
 
-  test('only offers NYC entitlements when New York City is the active market', async ({ page }) => {
+  test('only offers NYC-only evidence views when New York City is the active market', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'NYC entitlements', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Recorded deeds', exact: true })).toHaveCount(0);
     await page.getByLabel('Market').selectOption('NYC');
     await expect(page.getByRole('button', { name: 'NYC entitlements', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Recorded deeds', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'NYC entitlements', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'NYC ZAP entitlement applications' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Recorded deeds', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'NYC recorded deeds', exact: true })).toBeVisible();
+    await expect(page.getByLabel('ACRIS coverage limitation')).toContainText('Staten Island is not covered');
+    await expect(page.getByText('Exact raw DEED only')).toBeVisible();
+    await expect(page.getByText(/document_amt is debt\/obligation/)).toBeVisible();
+    await expect(page.getByText('Parcel centroid', { exact: true }).first()).toBeVisible();
+
+    const exportDownload = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export deed JSON' }).click();
+    expect((await exportDownload).suggestedFilename()).toMatch(/nyc-acris-recorded-deeds-.*\.json/);
+
+    await page.getByLabel('ACRIS document ID').fill('2025010100001001');
+    await page.getByRole('button', { name: 'Look up document' }).click();
+    await expect(page.getByText('Document 2025010100001001')).toBeVisible();
+    await expect(page.getByText('Price:', { exact: true })).toBeVisible();
   });
 });

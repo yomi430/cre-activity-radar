@@ -1,4 +1,14 @@
-import type { ApiResponse, ApprovalEvidence, CellSignal, CellsData, LensId, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData, ZapCellCount, ZapSummaryData, ZapWindow } from '../shared/contracts';
+import type { AcrisCellCount, AcrisDocumentEvidence, AcrisSummaryData, AdminJobAction, ApiResponse, ApprovalEvidence, CellSignal, CellsData, LensId, Market, PermitEvidence, RecordDetail, SourceReport, SummaryData, ZapCellCount, ZapSummaryData, ZapWindow } from '../shared/contracts';
+
+export type RecordedDeedCell = AcrisCellCount & { associationCount: number };
+export type RecordedDeedSummary = AcrisSummaryData & {
+  documentCount: number;
+  exactDeedRows: number;
+  duplicateMasterRows: number;
+  excludedTypeRows: number;
+  excludedTypeCounts: Record<string, number>;
+  associationCount: number;
+};
 
 const qs = (values: Record<string, string | number>) => new URLSearchParams(Object.entries(values).map(([key, value]) => [key, String(value)])).toString();
 async function get<T>(url: string, signal?: AbortSignal): Promise<ApiResponse<T>> {
@@ -22,7 +32,11 @@ export const api = {
   sources: (market: Market, signal?: AbortSignal) => get<SourceReport[]>(`/api/sources?${qs({ market })}`, signal),
   /** NYC-only entitlement-stage data; intentionally separate from permit APIs. */
   zapSummary: (window: ZapWindow, signal?: AbortSignal) => get<ZapSummaryData>(`/api/zap/summary?${qs({ window })}`, signal),
-  zapCells: (window: ZapWindow, signal?: AbortSignal) => get<ZapCellCount[]>(`/api/zap/cells?${qs({ window })}`, signal)
-  ,pipeline: (signal?: AbortSignal) => get<unknown>('/api/admin/pipeline', signal)
-  ,runJob: (action: 'REFRESH_CHICAGO' | 'REFRESH_NYC' | 'REFRESH_ZAP' | 'REFRESH_SBA' | 'REBUILD_DATABASE' | 'VERIFY_DATASET') => post<unknown>('/api/admin/jobs', { action })
+  zapCells: (window: ZapWindow, signal?: AbortSignal) => get<ZapCellCount[]>(`/api/zap/cells?${qs({ window })}`, signal),
+  /** NYC ACRIS is an evidence family, kept separate from discovery and ZAP. */
+  recordedDeedSummary: (signal?: AbortSignal) => get<RecordedDeedSummary>('/api/transactions/nyc/summary', signal),
+  recordedDeedCells: (signal?: AbortSignal) => get<RecordedDeedCell[]>('/api/transactions/nyc/cells', signal),
+  recordedDeedDocument: (documentId: string, signal?: AbortSignal) => get<AcrisDocumentEvidence>(`/api/transactions/nyc/documents/${encodeURIComponent(documentId)}`, signal),
+  pipeline: (signal?: AbortSignal) => get<unknown>('/api/admin/pipeline', signal),
+  runJob: (action: AdminJobAction) => post<unknown>('/api/admin/jobs', { action })
 };

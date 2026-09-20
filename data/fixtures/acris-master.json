@@ -1,0 +1,7 @@
+[
+  {"document_id":"2025010100001001","doc_type":"DEED","document_date":"2025-01-01T00:00:00.000","document_amt":"500000","recorded_datetime":"2025-01-03T12:00:00.000","good_through_date":"2026-08-31T00:00:00.000"},
+  {"document_id":"2025010100001001","doc_type":"DEED","document_date":"2025-01-01T00:00:00.000","document_amt":"500000","recorded_datetime":"2025-01-03T12:00:00.000","good_through_date":"2026-08-31T00:00:00.000"},
+  {"document_id":"2025010100001002","doc_type":"DEED","document_date":"2025-02-01T00:00:00.000","document_amt":"125000","recorded_datetime":"2025-02-02T12:00:00.000","good_through_date":"2026-08-31T00:00:00.000"},
+  {"document_id":"2025010100001003","doc_type":"DEED, TS","recorded_datetime":"2025-02-04T12:00:00.000"},
+  {"document_id":"2025010100001004","doc_type":"MTGE","recorded_datetime":"2025-02-04T12:00:00.000"}
+]

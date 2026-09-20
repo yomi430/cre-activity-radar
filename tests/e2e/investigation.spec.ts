@@ -74,6 +74,31 @@ test('opens data operations and reports the seeded pipeline', async ({ page }) =
   await expect(page.getByText('CHICAGO', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('NYC', { exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Refresh NYC ZAP' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Refresh NYC recorded deeds' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Refresh NYC recorded deeds' }).click();
+  await expect(page.getByRole('alertdialog', { name: 'Confirm local maintenance job' })).toContainText('current usable recorded-deed data stays active');
+  await page.getByRole('button', { name: 'Cancel' }).click();
   await expect(page.getByRole('button', { name: 'Verify dataset' })).toBeEnabled();
   await page.screenshot({ path: 'test-results/data-operations.png', fullPage: true });
+});
+
+test('keeps NYC recorded-deed context separate, disclosed, and exportable', async ({ page }) => {
+  await page.goto('/?market=NYC');
+  await page.locator('.app-nav').getByRole('button', { name: 'Recorded deeds', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'NYC recorded deeds' })).toBeVisible();
+  await expect(page.getByText('ACRIS recorded-deed context: four boroughs; Staten Island is not covered.')).toBeVisible();
+  await expect(page.getByText('Exact raw DEED only')).toBeVisible();
+  await expect(page.getByText(/document_amt is debt\/obligation/i)).toBeVisible();
+  await expect(page.getByText('separate from permit discovery', { exact: false })).toBeVisible();
+  await expect(page.getByText('500,000', { exact: true })).toHaveCount(0);
+
+  const jsonDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export deed JSON' }).click();
+  expect((await jsonDownload).suggestedFilename()).toMatch(/^nyc-acris-recorded-deeds-.*\.json$/);
+  const htmlDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export deed evidence' }).click();
+  expect((await htmlDownload).suggestedFilename()).toMatch(/^nyc-acris-recorded-deeds-.*\.html$/);
+
+  await page.getByRole('button', { name: 'Data operations', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Refresh NYC recorded deeds' })).toBeEnabled();
 });

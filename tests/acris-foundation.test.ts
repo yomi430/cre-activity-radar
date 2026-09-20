@@ -1,0 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import { describe, expect, it } from 'vitest';
+import { acrisCellsFor, acrisDocumentFor, acrisSummaryFor, ingestAcrisSnapshot } from '../src/server/acris.js';
+import { createSchema } from '../src/server/db.js';
+
+const fixture=(name:string)=>JSON.parse(readFileSync(new URL(`../data/fixtures/${name}`,import.meta.url),'utf8')) as Record<string,unknown>[];
+const input=()=>({snapshotId:'acris-fixture-1',retrievedAt:'2026-09-20T00:00:00.000Z',complete:true,publisherUpdatedAt:{master:'2026-09-08T19:32:41.000Z',legals:'2026-09-08T19:31:09.000Z',pluto:'2026-08-24T20:48:51.000Z'},master:fixture('acris-master.json'),legals:fixture('acris-legals.json'),parcels:fixture('acris-pluto.json')});
+describe('bounded NYC ACRIS recorded-deed evidence',()=>{
+  it('keeps exact DEED documents distinct, rights-aware legal associations deduped, and maps only coordinate-bearing PLUTO parcels',()=>{const db=new DatabaseSync(':memory:');createSchema(db);try{const result=ingestAcrisSnapshot(db,input());expect(result).toMatchObject({acceptedDocuments:2,duplicateMasterRows:1,excludedRawTypeCounts:{'DEED, TS':1,MTGE:1},acceptedAssociations:3,duplicateLegalRows:1,unmatchedBbls:1,nullCoordinateBbls:1,multiBblDocuments:1,placedDocumentCells:1});const summary=acrisSummaryFor(db);expect(summary).toMatchObject({documentCount:2,exactDeedRows:3,associations:3,permitRankingTreatment:'SEPARATE_RECORDED_DEED_CONTEXT'});expect(summary.quality).toMatchObject({plutoUnmatchedBbl:1,coordinateNull:1});expect(summary.disclosure).toMatch(/four boroughs; Staten Island is not covered/i);expect(acrisCellsFor(db)).toHaveLength(1);expect(acrisDocumentFor(db,'2025010100001001')).toMatchObject({bbls:['1000010001','1000010002'],placementPrecision:'PARCEL_CENTROID',documentAmountDisclosure:'NOT_A_SALE_PRICE'});}finally{db.close();}});
+  it('refuses activation when duplicate Master document IDs disagree on retained material fields',()=>{const db=new DatabaseSync(':memory:');createSchema(db);try{const bad=input();bad.master=[bad.master[0]!,{...bad.master[0]!,document_amt:'999999'}];expect(()=>ingestAcrisSnapshot(db,bad)).toThrow(/disagrees on material event fields/i);expect(acrisSummaryFor(db).documentCount).toBe(0);}finally{db.close();}});
+  it('is idempotent for a retried immutable snapshot',()=>{const db=new DatabaseSync(':memory:');createSchema(db);try{expect(ingestAcrisSnapshot(db,input()).acceptedDocuments).toBe(2);expect(ingestAcrisSnapshot(db,input()).acceptedDocuments).toBe(0);expect(acrisSummaryFor(db).documentCount).toBe(2);}finally{db.close();}});
+});
