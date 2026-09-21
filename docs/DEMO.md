@@ -51,3 +51,48 @@ If asked what comes next: validate the workflow with working analysts before add
 source. Then audit Chicago parcel association and sales placement; add licenses, NYC
 certificates of occupancy, or violations only as separate evidence families with explicit
 source contracts.
+
+## Reference screenshots
+
+Real captures from a running instance, not mockups — one full pass through the app in each of
+the two data modes described above, so every assertion in the script has a picture backing it.
+Kept out of the script itself so the timed beats above stay clean to read aloud; matched to the
+beat each one illustrates.
+
+### City discovery — Chicago vs NYC, demo sample vs full live data
+
+The clearest single illustration of what "demo" vs "full seed" actually means: same UI, same
+code, different data volume. Matches the 0:25–0:55 and 0:55–1:30 beats.
+
+| | Demo sample (bundled, instant) | Full live data (fetched, ~4m48s) |
+| --- | --- | --- |
+| **Chicago** — Ground-up & site work lens | ![Chicago discovery, demo sample](assets/01-city-discovery-chicago-demo.png) | ![Chicago discovery, full live data](assets/01-city-discovery-chicago-full.png) |
+| **NYC** — default filters | ![NYC discovery, demo sample](assets/01-city-discovery-nyc-demo.png) | ![NYC discovery, full live data](assets/01-city-discovery-nyc-full.png) |
+
+### 0:55–1:30 — NYC property context, "Likely commercial"
+
+This is the pair that matters most. Under the bundled 8-parcel fixture the filter surfaces
+almost nothing — under the live 858,284-parcel PLUTO snapshot it surfaces real breadth. Exactly
+the gap the pre-call note above warns about.
+
+| Demo sample (8-parcel fixture) | Full live data (858,284 real parcels) |
+| --- | --- |
+| ![NYC commercial property context, demo fixture](assets/02-property-context-commercial-demo.png) | ![NYC commercial property context, full live PLUTO](assets/02-property-context-commercial-full.png) |
+
+### 1:30–2:10 — Investigation Brief drill-down
+
+Qualification signal, H3 breakdown, repeated addresses, data quality disclosure, and raw
+source-record evidence for a selected area — the deepest view in the product either way.
+
+| Demo sample | Full live data |
+| --- | --- |
+| ![Investigation Brief, demo sample](assets/03-investigation-brief-demo.png) | ![Investigation Brief, full live data](assets/03-investigation-brief-full.png) |
+
+### 2:35–3:00 — Data operations / source health
+
+Source-by-source status, including `SBA_504: unavailable` shown plainly rather than hidden —
+the "operational trust" claim from the script, shown rather than just asserted.
+
+| Demo sample | Full live data |
+| --- | --- |
+| ![Data operations, demo sample](assets/04-data-operations-demo.png) | ![Data operations, full live data](assets/04-data-operations-full.png) |

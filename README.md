@@ -15,7 +15,7 @@ It is deliberately a research-triage workflow. It does **not** predict demand, v
 
 ### See it quickly
 
-- **Start with the working app:** the path below seeds the tracked demo and starts the local server. The [three-minute demo script](docs/DEMO.md) gives a guided route through the product.
+- **Start with the working app:** the path below seeds the tracked demo and starts the local server. The [three-minute demo script](docs/DEMO.md) gives a guided route through the product — its reference-screenshots section has real captures backing every claim in the script, including a side-by-side of the demo sample vs. full live data for both cities, so you can see what each assertion looks like without running it yourself first.
 - **Recruiter run:**
 
   ```powershell
