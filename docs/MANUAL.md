@@ -88,12 +88,17 @@ The area list and map share the same market, permit-type filter, and low-volume 
 - **Current count:** current-window count, descending.
 - **Largest individual reported estimate:** the highest current record-level applicant estimate in the H3, with current count as the tie-breaker. It is not an area total.
 
-In NYC, **Property context** applies an exact BBL join to the bundled PLUTO snapshot. The
-categories describe the tax lot in that snapshot; they do not prove current tenancy or the
-permit work's use. `Unknown` keeps missing, invalid, unmatched, and unsupported source cases
-visible. Chicago shows this control as unavailable because no equivalent audited join exists.
-The minimum-estimate control compares individual records and excludes missing values; zero
-means no cost filter.
+In NYC, **Property context** applies an exact BBL join to a PLUTO snapshot. By default that
+snapshot is a bundled 8-parcel fixture — enough to prove the join works, not for coverage. Run
+`npm run data:fetch:pluto` to pull the complete, current NYC PLUTO dataset (858,284 real
+parcels) and `npm run data:seed` will use it automatically instead of the fixture; expect this
+to change property-context coverage substantially (from a handful of qualifying H3 cells to
+roughly 240 in the current comparison window, in one measured run against the bundled permit
+sample). The categories describe the tax lot in whichever snapshot is active; they do not prove
+current tenancy or the permit work's use. `Unknown` keeps missing, invalid, unmatched, and
+unsupported source cases visible. Chicago shows this control as unavailable because no
+equivalent audited join exists. The minimum-estimate control compares individual records and
+excludes missing values; zero means no cost filter.
 
 The default list excludes an area whose combined current and prior count is below five. This is a visible prototype triage threshold, not statistical significance. Use **Show low-volume areas** to include them. If a control causes the selected area to disappear, the app clears the selection rather than showing mismatched detail.
 
@@ -158,7 +163,7 @@ Read the source-quality panel before interpreting an area. It reports:
 | Missing costs | Accepted permit records without a usable nonnegative applicant estimate. |
 | Completeness | `complete-query`, `partial`, synthetic, or unavailable as represented by the seeded source. |
 
-For the submitted full snapshot, Chicago contains 63,482 accepted permits (62,750 mapped, 732 unmapped) and NYC contains 334,974 accepted permits (333,591 mapped, 1,383 unmapped). Full query extraction, accounting balance, dates, coordinate bounds, H3 validity, and local checks are recorded by the seed and verification commands. Source records remain mutable upstream; the local snapshot is frozen for reproducible review.
+For one full-extract snapshot retrieved 2026-09-19, Chicago contained 63,482 accepted permits (62,750 mapped, 732 unmapped) and NYC contained 334,974 accepted permits (333,591 mapped, 1,383 unmapped); a re-fetch on 2026-09-21 returned 335,027 NYC permits — the coverage window is open-ended, so the source is a live, growing dataset and exact counts are tied to their retrieval date, not a fixed constant. Full query extraction, accounting balance, dates, coordinate bounds, H3 validity, and local checks are recorded by the seed and verification commands. Source records remain mutable upstream; each local snapshot is frozen for reproducible review as of its own retrieval date.
 
 ## SBA 504 context is separate
 
