@@ -232,7 +232,7 @@ safeguards, URL restoration, H3 refinement, and saved-lead behavior.
 **Completed:** two-market permit discovery, explainable H3 research, NYC property context,
 individual-estimate controls, saved leads and exports, separate ZAP/ACRIS context, guarded
 operations, full-data permit bootstrap, automated tests, interview materials, and a
-repeatable narrated-video build.
+repeatable local demo workflow.
 
 **Pending after submission:** observe working CRE analysts and measure whether the workflow
 changes a defensible next action; add production authentication/orchestration; implement a
@@ -243,7 +243,6 @@ violations only through separate verified source contracts.
 ## More detail
 
 - [Three-minute demo](DEMO.md)
-- [Narrated case-study storyboard](NARRATED_DEMO.md)
 - [Product positioning and hard questions](PRODUCT_BRIEF.md)
 - [Product brief and FAQ](PRODUCT_BRIEF.md)
 - [Task-oriented manual](MANUAL.md)

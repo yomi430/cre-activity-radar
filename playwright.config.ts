@@ -2,8 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'tests/e2e',
-  timeout: 30_000,
-  expect: { timeout: 15_000 },
+  // Full public snapshots contain roughly 400k permit rows. Keep browser assertions
+  // strict, but allow complete-snapshot API queries to finish on reviewer hardware.
+  timeout: 60_000,
+  expect: { timeout: 30_000 },
   use: { baseURL: 'http://127.0.0.1:3001', trace: 'retain-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

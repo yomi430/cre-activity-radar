@@ -26,8 +26,6 @@
     "data:fetch:sba": "node scripts/fetch-sba.mjs",
     "test": "vitest run --exclude tests/e2e/**",
     "test:e2e": "playwright test",
-    "demo:record": "node scripts/record-demo.mjs",
-    "demo:record:interview": "node scripts/record-interview-demo.mjs",
     "demo": "npm run data:seed && npm run build && npm run start"
   },
   "dependencies": {
@@ -40,7 +38,6 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@playwright/test": "^1.55.0",
     "@types/express": "^5.0.3",
     "@types/leaflet": "^1.9.20",

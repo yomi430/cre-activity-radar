@@ -15,7 +15,7 @@ It is deliberately a research-triage workflow. It does **not** predict demand, v
 
 ### See it quickly
 
-- **[Watch the 9:43 narrated case study](docs/assets/Mahesh-Yerram-CRE-Activity-Radar-case-study.mp4):** the opening frames the product decision and architecture; the remainder demonstrates the live workflow, source boundaries, and operations controls.
+- **Start with the working app:** the path below seeds the tracked demo and starts the local server. The [three-minute demo script](docs/DEMO.md) gives a guided route through the product.
 - **Recruiter run:**
 
   ```powershell
@@ -47,6 +47,102 @@ flowchart LR
 | NYC property context | Exact DOB BBL join to retained PLUTO land-use categories | Parcel context is not tenancy or proof of permit purpose |
 | Additional context | Separate NYC ZAP entitlements, ACRIS exact-DEED evidence, and optional SBA 504 borrower-city context | These sources never change permit ranking or heatmap colors |
 | Data operations | Staged validation, snapshot identity, source-health reporting, idempotent refresh behavior | Local operations prototype; not a production admin system |
+
+## Workflow and system architecture
+
+The product follows one decision from broad screening to an evidence packet. Recent navigation
+helps an analyst resume exploration; only an explicit disposition creates a saved lead.
+
+```mermaid
+flowchart LR
+  A[Choose city and auditable CRE lens] --> B[Compare fixed permit windows]
+  B --> C[Rank and map H3 resolution-8 cells]
+  C --> D[Select one cell]
+  D --> E[Review investigation brief]
+  E --> F[Inspect retained source records and caveats]
+  F --> G[Record disposition and analyst note]
+  G --> H[Save or export evidence packet]
+  I[NYC PLUTO parcel context] --> D
+  J[ZAP, ACRIS, SBA context] -. separate evidence; no ranking effect .-> F
+```
+
+```mermaid
+flowchart TB
+  subgraph Acquisition
+    CHI[Chicago permit adapter]
+    NYC[NYC DOB NOW adapter]
+    CTX[PLUTO / ZAP / ACRIS / SBA adapters]
+  end
+  CHI --> N[Normalize, reject, deduplicate, classify]
+  NYC --> N
+  CTX --> V[Source-specific validation]
+  N --> S[(Versioned SQLite snapshot)]
+  V --> S
+  S --> API[Express read APIs + fixed admin jobs]
+  API --> UI[React / Vite investigation UI]
+  UI --> LS[Browser-local recent history and Signal Inventory]
+```
+
+The refresh boundary is transactional at the snapshot level:
+
+```text
+fetch bounded source → stage → reconcile counts/checksums → build isolated DB
+                     → verify invariants → atomically activate
+failure at any step  → preserve the last verified active snapshot
+```
+
+### Core data contracts
+
+| Contract | Key fields | Meaning and invariant |
+| --- | --- | --- |
+| `PermitEvidence` | `id`, `market`, `source`, `date`, `permitType`, `reportedCostCents`, `h3Cell`, `point`, `propertyUse` | One retained issuance record. Cost is one applicant estimate; coordinates retain their precision provenance. |
+| `CellSignal` | `h3Cell`, prior/current/absolute counts, monthly cadence, largest individual estimate, cost coverage | Explainable H3 screening summary. It is not a score, neighborhood, project, or forecast. |
+| `InvestigationBrief` | drivers, persistence, repeated addresses, largest records, quality, next checks | Evidence and research prompts for one selected cell and filter state. |
+| `SourceReport` | rows read/accepted/rejected/duplicate/out-of-scope/resolved/unresolved, completeness, retrieval metadata | Accounting must reconcile before a snapshot is accepted. |
+| `PropertyUseEvidence` | canonical BBL, direct PLUTO `landuse`, category, provenance, confidence, snapshot | NYC parcel context only; Chicago returns unavailable instead of an inference. |
+| `ZapSummaryData` | distinct projects, status counts, filed-date coverage, validated/unmatched BBLs | Entitlement context remains separate from permit ranking. |
+| `AcrisDocumentEvidence` | exact `DEED` document ID, dates, BBLs, placed H3 cells, parcel-centroid precision | Four-borough recorded-deed context; `document_amt` is never treated as sale price. |
+
+### Storage schema
+
+The normalized tables keep source events, joins, and quality accounting separate:
+
+```mermaid
+erDiagram
+  DATASETS ||--o{ PERMITS : contains
+  PERMITS ||--o| PERMIT_PROPERTY_USE : "exact permit id"
+  PROPERTY_USE_SNAPSHOTS ||--o{ PLUTO_PROPERTY_USE_PARCELS : contains
+  PROPERTY_USE_SNAPSHOTS ||--o{ PERMIT_PROPERTY_USE : classifies
+  ZAP_SNAPSHOTS ||--o{ ZAP_PROJECTS : tracks
+  ZAP_PROJECTS ||--o{ ZAP_PROJECT_BBLS : associates
+  ZAP_PROJECTS ||--o{ ZAP_PROJECT_CELLS : places
+  ACRIS_SNAPSHOTS ||--o{ ACRIS_DOCUMENTS : retains
+  ACRIS_DOCUMENTS ||--o{ ACRIS_LEGAL_ASSOCIATIONS : has
+  ACRIS_DOCUMENTS ||--o{ ACRIS_DOCUMENT_CELLS : places
+  DATASETS ||--o{ SOURCE_REPORTS : verifies
+```
+
+Raw publisher rows remain serialized beside normalized fields for auditability. Composite
+indexes cover market/date/H3, market/type/date, and cell/date/cost access paths. ZAP and ACRIS
+use distinct-document/project keys so multi-parcel associations do not inflate city totals.
+
+### Technical specification
+
+| Layer | Implementation |
+| --- | --- |
+| Runtime | Node.js `>=24.18.0 <25`; TypeScript throughout application code |
+| Web | React 19, Vite 7, Leaflet, H3-js; responsive named workspaces |
+| API | Express 5; Zod validation at query/input boundaries; typed response contracts |
+| Storage | Node built-in SQLite; immutable source snapshots and an active dataset identity |
+| Ingestion | Node scripts; fixed selected-field contracts, pagination, normalization, checksums, manifests, and reconciliation |
+| State | URL-addressable market/H3/filter state plus browser-local saved-lead inventory |
+| Testing | Vitest unit/integration coverage and Playwright end-to-end workflows |
+| Packaging | One repository and one local process; tracked demo fixtures, optional reproducible full-data acquisition |
+
+Principal read APIs are `/api/summary`, `/api/cells`, `/api/cells/:cell/brief`,
+`/api/cells/:cell/evidence`, `/api/records/:id`, `/api/sources`, `/api/zap/*`, and
+`/api/transactions/nyc/*`. `/api/admin/jobs` accepts only enumerated maintenance jobs; it
+does not execute user-supplied command text or paths.
 
 ## Chicago and NYC use one workflow, not one meaning
 
@@ -179,7 +275,7 @@ The recorded release result was 63 Vitest unit/integration tests across 16 files
 <details>
 <summary><strong>Completed in this prototype</strong></summary>
 
-Two-market permit discovery; explainable H3 research; NYC property context; individual-estimate controls; saved leads and exports; separate ZAP/ACRIS context; guarded data operations; full-data permit bootstrap; automated tests; interview materials; and a repeatable narrated-video build.
+Two-market permit discovery; explainable H3 research; NYC property context; individual-estimate controls; saved leads and exports; separate ZAP/ACRIS context; guarded data operations; full-data permit bootstrap; and automated tests.
 </details>
 
 <details>
