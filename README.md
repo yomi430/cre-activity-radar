@@ -4,7 +4,10 @@ CRE Activity Radar is a local prototype for a **CRE market research analyst supp
 
 Its output is an Investigation Brief for a selected area. The brief connects a fixed-window count change to its permit-type mix, current-period cadence, repeated supplied addresses, selected high reported-cost evidence, source-quality context, retained records, and recommended verification steps. It is a research triage aid, not a prediction, property valuation, investment recommendation, or demand signal.
 
-**Start with the task-oriented [product manual](docs/MANUAL.md)** for a guided tour, question index, source caveats, troubleshooting, and API examples. For the review conversation, use the concise [interview preparation guide](docs/INTERVIEW_PREP.md) and [three-minute demo](docs/DEMO.md).
+**Start with the [product handbook](docs/HANDBOOK.md)** for a question-led feature inventory, market comparison, workflows, corner cases, architecture rationale, operations, and release status. The [task-oriented manual](docs/MANUAL.md) provides detailed usage and API examples. For the review conversation, use the concise [interview preparation guide](docs/INTERVIEW_PREP.md) and [three-minute demo](docs/DEMO.md).
+
+The [ideation record](docs/IDEATION.md) shows how the assignment moved from 38 considered
+idea slots to this deliberately bounded product.
 
 The working hypothesis is that analysts benefit from transparent, count-based triage before they spend time on proprietary property, leasing, or broker research. This is a product hypothesis, not a claim that users were interviewed or that the prototype has measured time savings, predictive accuracy, or causal insight.
 

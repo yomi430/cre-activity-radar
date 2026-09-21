@@ -1,7 +1,7 @@
 # Product brief: an auditable weekly investigation queue
 
 > **Market-validation update (2026-09-19):** Permit aggregation and careful municipal
-> normalization already exist in products such as PropertyLabs. The defensible claim is
+> normalization already exist in commercial products. The defensible claim is
 > an interactive, auditable CRE analyst workflow, not novelty of the data or method.
 > Permits are later than entitlement signals; NYC ZAP-BBL is implemented as a separate
 > entitlement context. SBA remains unvalidated supplementary context. Source-specific lens
