@@ -1,0 +1,9 @@
+# Public source snapshots are checksummed byte-for-byte. Never rewrite line endings.
+*.jsonl binary
+
+# Keep documentation and source text normalized in Git.
+*.md text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
