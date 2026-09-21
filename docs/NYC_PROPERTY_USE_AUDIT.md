@@ -1,6 +1,6 @@
 # NYC permit property-use enrichment audit
 
-Audited 2026-09-20. This is a source and implementation contract for a future NYC-only property-use filter. It does not make DOB NOW: Build commercial-only data.
+Audited and implemented 2026-09-20. This is the source and implementation contract for the NYC-only property-context filter. It does not make DOB NOW: Build commercial-only data.
 
 ## Decision
 

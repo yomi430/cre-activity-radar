@@ -105,7 +105,8 @@ network access, can download more than 200 MB, and may take several minutes. ZAP
 remain explicit optional refreshes (`data:fetch:zap` and `data:fetch:acris`) because they are
 separate evidence products rather than prerequisites for permit discovery. SBA acquisition
 is not included: the repository currently consumes a separately verified SBA CSV when it is
-present in `data/raw/`; the bundled retained SBA sample keeps clean-checkout behavior working.
+present in `data/raw/`; the clean checkout uses an empty optional SBA demo input and clearly
+shows that SBA context is unavailable.
 
 Exceptions: the bundled NYC property-use, ZAP, and ACRIS files are deliberately small
 integration fixtures, not complete live extracts. Their pages and exports label this
@@ -137,7 +138,7 @@ The seed reports balance for every source. `data:verify` passed its accounting, 
 
 ## Sources and further reading
 
-The verified source notes, field semantics, and retrieval caveats are in [docs/RESEARCH.md](docs/RESEARCH.md); the SBA field audit and exact borrower-city policy are in [docs/SBA_STATUS.md](docs/SBA_STATUS.md). [docs/DECISIONS.md](docs/DECISIONS.md) records the boundaries that keep the prototype from overstating what its data can support. [docs/DEMO.md](docs/DEMO.md) is a three-minute walkthrough.
+The verified source notes, field semantics, and retrieval caveats are in [docs/RESEARCH.md](docs/RESEARCH.md); the SBA field audit and exact borrower-city policy are in [docs/SBA_STATUS.md](docs/SBA_STATUS.md). [docs/DECISIONS.md](docs/DECISIONS.md) records the boundaries that keep the prototype from overstating what its data can support. [docs/DEMO.md](docs/DEMO.md) is a three-minute walkthrough, and [docs/SUBMISSION.md](docs/SUBMISSION.md) is the final sharing and recording checklist.
 
 ## Product positioning
 
