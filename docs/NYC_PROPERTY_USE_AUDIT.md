@@ -35,7 +35,9 @@ bbl, landuse, bldgclass, unitsres, unitstotal, borough, block, lot, latitude, lo
 
 If PLUTO returns no exact BBL, mark the permit `PLUTO_UNMATCHED` and `UNKNOWN`. If it returns duplicate canonical BBLs, fail activation. Condominium/billing-lot treatment can cause legitimate unmatched BBLs; that is not permission to guess a replacement.
 
-External check completed 2026-09-20: the current official PLUTO endpoint accepts and returns `bbl`, `landuse`, `bldgclass`, `unitsres`, `unitstotal`, borough/block/lot, and latitude/longitude. The current catalog describes PLUTO as a quarterly DCP tax-lot dataset. A full match rate is intentionally not asserted until the 65,539-BBL retained extraction is run and checksummed.
+External check completed 2026-09-20: the current official PLUTO endpoint accepts and returns `bbl`, `landuse`, `bldgclass`, `unitsres`, `unitstotal`, borough/block/lot, and latitude/longitude. The current catalog describes PLUTO as a quarterly DCP tax-lot dataset.
+
+**Live extraction implemented 2026-09-21** (`scripts/pluto-source.mjs`, run via `npm.cmd run data:fetch:pluto`): a full-table paginated extract of all 858,284 current PLUTO parcels, validated by an exact publisher row-count re-check after extraction and a SHA-256 over the staged snapshot, with atomic staged replace — the same integrity pattern as `scripts/permit-source.mjs`, rather than the bounded per-BBL batch fetch originally sketched above. `scripts/seed.mjs` prefers this live snapshot over the bundled 8-parcel fixture whenever present (`data/raw/nyc-pluto.jsonl` + checksummed manifest). This is a full-table sync, not filtered to the 65,539 distinct permit BBLs, so it does not depend on which permit BBLs are in scope for a given run. Reason-code accounting (`NO_BBL`, `PLUTO_UNMATCHED`, `MISSING_LANDUSE`, `UNMAPPED_LANDUSE`) is recorded per permit via the existing `classification()` function shared with the fixture path; aggregate reconciliation counters in the Operations UI (requested/returned/matched/unmatched BBL, coverage share) remain future work, as they were for the fixture path.
 
 ## Classification
 

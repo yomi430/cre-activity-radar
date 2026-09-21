@@ -188,6 +188,8 @@ npm.cmd run demo
 
 This downloads more than 200 MB, stages and reconciles the official extracts, seeds SQLite, and verifies the result. `data/raw/` is intentionally not committed because the current local source files exceed normal repository-size limits. ZAP and ACRIS refresh independently via `npm.cmd run data:fetch:zap` and `npm.cmd run data:fetch:acris`. SBA ingestion requires a separately verified local CSV; the demo discloses when that context is unavailable.
 
+NYC property context ships as an 8-parcel bundled fixture by default (enough to prove the BBL join works, not for coverage). For the full citywide picture, run `npm.cmd run data:fetch:pluto`: it pulls the complete, current NYC PLUTO dataset (~858k tax lots, official NYC Open Data) with the same checksum-and-row-count validation as the permit fetchers, then `npm.cmd run data:seed` automatically prefers it over the fixture. This is independent of `data:setup:full` — it works against either the demo permit sample or the complete permit extracts, and meaningfully changes property-context coverage either way.
+
 Source notes and audits: [research index](docs/RESEARCH.md), [NYC property context](docs/NYC_PROPERTY_USE_AUDIT.md), [Chicago property context](docs/CHICAGO_PROPERTY_USE_AUDIT.md), [ACRIS](docs/TRANSACTION_SOURCE_AUDIT.md), and [SBA](docs/SBA_STATUS.md).
 </details>
 

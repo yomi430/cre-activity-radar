@@ -27,3 +27,19 @@ export function seedPropertyUseRows(db, { snapshotId, permitSnapshotSha256, retr
   return { snapshotId, parcels:lookup.size, permits:permits.length };
 }
 export function seedPropertyUseFixture(db, directory = resolve('data/fixtures')) { const file=resolve(directory,'nyc-property-use-pluto.json'), textValue=readFileSync(file,'utf8'), parcels=JSON.parse(textValue); return seedPropertyUseRows(db,{snapshotId:'bundled-nyc-property-use-fixture-v1',permitSnapshotSha256:createHash('sha256').update('bundled-public-retained-sample-v1').digest('hex'),retrievedAt:'2026-09-20T00:00:00.000Z',plutoRowsUpdatedAt:'2026-09-19T00:00:00.000Z',parcels,manifest:{mode:'fixture',source:'NYC PLUTO direct LandUse',file:'nyc-property-use-pluto.json'}}); }
+
+// Live citywide PLUTO snapshot (scripts/pluto-source.mjs), used instead of the bundled 8-parcel
+// fixture whenever RADAR_PLUTO_PATH or a fetched data/raw/nyc-pluto.jsonl snapshot is present.
+// Same seedPropertyUseRows() ingestion and classification logic as the fixture path; only the
+// parcel source and snapshot metadata differ.
+export function seedPropertyUseLiveSnapshot(db, snapshotManifest, permitSnapshotSha256) {
+  const parcels = readFileSync(snapshotManifest.snapshot, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line));
+  return seedPropertyUseRows(db, {
+    snapshotId: `live-nyc-pluto-${snapshotManifest.sha256.slice(0, 12)}`,
+    permitSnapshotSha256,
+    retrievedAt: snapshotManifest.retrievedAt,
+    plutoRowsUpdatedAt: snapshotManifest.publisherRowsUpdatedAt ?? null,
+    parcels,
+    manifest: { mode: 'live', source: 'NYC PLUTO direct LandUse', resourceUrl: snapshotManifest.resourceUrl, rows: snapshotManifest.rows, sha256: snapshotManifest.sha256 },
+  });
+}

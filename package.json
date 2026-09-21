@@ -24,6 +24,7 @@
     "data:fetch:zap": "node scripts/refresh-zap.mjs",
     "data:fetch:acris": "node scripts/refresh-acris.mjs",
     "data:fetch:sba": "node scripts/fetch-sba.mjs",
+    "data:fetch:pluto": "node scripts/fetch-pluto.mjs",
     "test": "vitest run --exclude tests/e2e/**",
     "test:e2e": "playwright test",
     "demo": "npm run data:seed && npm run build && npm run start"
