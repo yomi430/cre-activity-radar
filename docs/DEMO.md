@@ -1,5 +1,13 @@
 # Three-minute demo script
 
+**Before the call:** run `npm.cmd run data:fetch:pluto` once (~1m 8s, fetches all 858,284 real
+NYC parcels) and reseed. The 0:55–1:30 beat below filters to "Likely commercial" — under the
+bundled 8-parcel fixture that only surfaces 1-2 H3 cells, which reads as sparse or broken on a
+live call. With the live snapshot it's ~240 cells, a much stronger real demonstration of the
+same feature. If you demo from the plain fixture instead, say so explicitly before this beat
+("this is a proof-of-concept fixture covering 8 parcels citywide, not full coverage") rather
+than letting a sparse result speak for itself.
+
 **0:00–0:25 — frame the decision.** “A CRE research analyst has more public records than
 time. CRE Activity Radar turns heterogeneous municipal records into a short, traceable
 investigation queue: where should I spend the next thirty minutes, why did it surface, and
