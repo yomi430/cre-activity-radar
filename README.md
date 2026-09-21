@@ -196,6 +196,17 @@ The tracked demo starts immediately from retained permit samples and small deter
 
 Network-dependent — these are one real measured run, not a guaranteed bound.
 
+**These are snapshots we took, not a versioned or continuously updated feed from the source.**
+Every fetch (Chicago/NYC permits, PLUTO, ZAP, ACRIS, SBA) captures whatever the publisher
+returns at that moment as an immutable, checksummed local file with its own retrieval
+timestamp; nothing in this repo polls the source or auto-refreshes. The bundled demo/fixture
+data is frozen as of its own retrieval date (visible in each dataset's manifest/report), and
+even the "complete" live-fetch commands above just take a fresh snapshot at whatever moment
+you run them — re-running them later gets a different snapshot, not a diff or a live view.
+ZAP/ACRIS keep an explicit history of prior immutable snapshots; the permit and PLUTO fetchers
+replace the previous local snapshot outright. Treat every number in this app as "true as of
+its documented retrieval date," never as a live figure.
+
 For complete fixed-window Chicago and NYC permit extracts, run:
 
 ```powershell
