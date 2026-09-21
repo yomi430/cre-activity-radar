@@ -179,6 +179,23 @@ The comparison dates are fixed so that a review is reproducible:
 
 The tracked demo starts immediately from retained permit samples and small deterministic integration fixtures. It is suitable for inspecting the product flow, but partial samples disable growth percentages and growth ranking; sample counts are not market totals.
 
+**Timing, measured on a completely fresh `git clone` (no caches):**
+
+| Stage | Time |
+| --- | ---: |
+| `git clone` | ~1s |
+| `npm install` | ~8s |
+| `npm run demo` (seed + build + start) | ~24s |
+| **Demo total, clone to running app** | **~33s** |
+| `npm run data:fetch:chicago` (63,482 real rows) | ~20s |
+| `npm run data:fetch:nyc` (335,027 real rows) | ~1m 46s |
+| `npm run data:fetch:pluto` (858,284 real parcels) | ~1m 8s |
+| Re-seed with full permits + live PLUTO | ~59s |
+| `npm run data:verify` | ~6s |
+| **Full-data total, clone to running with everything live** | **~4m 48s** |
+
+Network-dependent — these are one real measured run, not a guaranteed bound.
+
 For complete fixed-window Chicago and NYC permit extracts, run:
 
 ```powershell
