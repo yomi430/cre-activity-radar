@@ -1,132 +1,156 @@
 # CRE Activity Radar
 
-CRE Activity Radar is a local prototype for a **CRE market research analyst supporting brokers' weekly market review**. It converts public permit changes into an auditable investigation queue: **which local areas deserve the next research step, why did they surface, and which source records must be checked before a broker treats the pattern as meaningful?**
+CRE Activity Radar is a local prototype for a commercial-real-estate (CRE) research analyst preparing a recurring market review. It turns public permit activity into a small, auditable investigation queue: **where to research next, why an area surfaced, and which source evidence still needs verification.**
 
-Its output is an Investigation Brief for a selected area. The brief connects a fixed-window count change to its permit-type mix, current-period cadence, repeated supplied addresses, selected high reported-cost evidence, source-quality context, retained records, and recommended verification steps. It is a research triage aid, not a prediction, property valuation, investment recommendation, or demand signal.
+It is deliberately a research-triage workflow. It does **not** predict demand, value property, identify tenants, recommend an investment, or treat a permit as proof of a unique project, construction start, or completed work.
 
-**Start with the [product handbook](docs/HANDBOOK.md)** for a question-led feature inventory, market comparison, workflows, corner cases, architecture rationale, operations, and release status. The [task-oriented manual](docs/MANUAL.md) provides detailed usage and API examples. For the review conversation, use the concise [interview preparation guide](docs/INTERVIEW_PREP.md) and [three-minute demo](docs/DEMO.md).
+## 60-second reviewer path
 
-The [ideation record](docs/IDEATION.md) shows how the assignment moved from 38 considered
-idea slots to this deliberately bounded product.
-
-The working hypothesis is that analysts benefit from transparent, count-based triage before they spend time on proprietary property, leasing, or broker research. This is a product hypothesis, not a claim that users were interviewed or that the prototype has measured time savings, predictive accuracy, or causal insight.
-
-## What it builds
-
-The application supports the same local investigation workflow for **Chicago** and **New York City**. City discovery contains the permit queue and heatmap; selecting an area opens Research workspace. Research combines the active H3 with the latest five navigation visits and the separate, deliberate Signal Inventory. **Back to whole city** clears the H3 while preserving global filters. NYC entitlements, NYC recorded deeds, Data & methods, and Data Operations have focused pages instead of competing for space on discovery. Analysts can record a disposition and note, recall/filter/remove a lead, and export either one evidence packet or the parked-lead portfolio as JSON/HTML. Queue candidates are never saved automatically. Source-health panels report accepted, rejected, duplicate, out-of-scope, mapped, and unmapped rows so a viewer can assess coverage before interpreting a change.
-
-This is a product hypothesis, formed from desk research and the constraints of public data. No analyst interviews, adoption study, predictive validation, or measured time savings are claimed. The intended workflow and its explicit limits are in [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md).
-
-It also shows SBA 504 approvals as a collapsed, experimental city-labelled context panel and evidence list. Those approvals never affect permit-cell colors, rankings, or detail evidence. The application keeps the two indicators separate because an approval has a different geography, timing, and meaning from a permit record.
-
-For NYC, the application also shows a separate ZAP entitlement context. A clean checkout
-uses deterministic retained fixtures; **Refresh NYC ZAP** or `npm.cmd run data:fetch:zap`
-acquires the official current Socrata snapshots. It uses validated ZAP BBL associations and PLUTO parcel
-centroids, counts distinct projects citywide, and never changes the permit queue. Its
-all-record view is primary; the filed-date view discloses incomplete filing-date coverage.
-The bundled ZAP fixture demonstrates the integration and must not be described as a live
-or complete current ZAP snapshot. Live acquisition writes immutable checksummed snapshots,
-validates row completeness, rebuilds an isolated database, and advances the active pointer
-only after success. An unchanged publisher version returns `UP_TO_DATE` without rebuilding.
-
-NYC also has a separate ACRIS recorded-deed evidence page. It includes only exact raw
-`DEED` records, counts distinct document IDs, preserves multi-BBL associations, and places
-only coordinate-bearing PLUTO matches at parcel-centroid precision. It explicitly excludes
-Staten Island, never presents `document_amt` as a sale price, and never changes the permit
-queue. The bundled fixture proves the integration; **Refresh NYC recorded deeds** or
-`npm.cmd run data:fetch:acris` performs the guarded official-source refresh.
-
-The comparison windows are fixed for reproducibility:
-
-| Period | Dates |
+| Question | Answer |
 | --- | --- |
-| Prior | 2024-07-01 through 2025-06-30 (`[2024-07-01, 2025-07-01)`) |
-| Current | 2025-07-01 through 2026-06-30 (`[2025-07-01, 2026-07-01)`) |
+| **Who is it for?** | A CRE market research analyst supporting a broker's recurring market review. |
+| **What does it do?** | Compares fixed permit windows in Chicago or NYC, groups mapped records into H3 cells, explains a selected cell, and lets the analyst save/export a deliberate evidence-backed disposition. |
+| **Why does it matter?** | Public portals publish individual datasets. This prototype tests a workflow that carries a research question from city-level screening through record-level evidence and a next check. |
+| **What is the output?** | An Investigation Brief and optional saved evidence packet, not an automated lead or a market conclusion. |
 
-The visible label is “Jul 2025–Jun 2026 versus Jul 2024–Jun 2025.” These dates are not calculated from today or from the latest observed record.
+### See it quickly
 
-## Data semantics and limits
+- **[Watch the 9:43 narrated case study](docs/assets/Mahesh-Yerram-CRE-Activity-Radar-case-study.mp4):** the opening frames the product decision and architecture; the remainder demonstrates the live workflow, source boundaries, and operations controls.
+- **Recruiter run:**
 
-Chicago uses the City of Chicago Building Permits dataset. Its `issue_date` is treated as a recorded permit-issuance event, not a construction start or a unique development project. NYC uses DOB NOW: Build approved permits. That dataset excludes some permit systems (including electrical, elevator, and limited-alteration application data), and a DOB NOW issuance record is also not a unique project. Both sources retain mixed residential and commercial activity. NYC offers a bounded **property context** filter by exact DOB BBL to the bundled PLUTO snapshot and direct `landuse` categories. It is parcel context, not proof of tenancy or permit purpose. Chicago has no audited parcel-use join, so the UI explicitly leaves this filter unavailable instead of guessing from descriptions, cost, or coordinates.
+  ```powershell
+  npm.cmd install
+  npm.cmd run demo
+  ```
 
-`reported_cost` (Chicago) and `estimated_job_costs` (NYC) are applicant-reported estimates. The UI can filter by a minimum individual value and rank H3 areas by their largest current individual record. Values remain row-level evidence: they are never summed or called construction investment, because multiple permits may overlap one project and missing values are not zero.
+  Open `http://127.0.0.1:3001`. The clean checkout starts from tracked retained samples and deterministic integration fixtures. Use `npm` in place of `npm.cmd` outside Windows PowerShell.
 
-SBA records use 504 `ApprovalDate` and `GrossApproval`, which the published dictionary defines as the total loan amount. They are approval records, not proof of disbursement, completed work, or tenant/space demand. Their `BorrCity` fields are borrower geography, not project geography. Chicago context includes exact normalized `CHICAGO`, Illinois borrower-city labels; NYC context includes exact `NEW YORK`, `BROOKLYN`, `BRONX`, `QUEENS`, and `STATEN ISLAND`, New York labels. Other plausible local labels such as Flushing and Jamaica are excluded without a maintained crosswalk. A later loan status remains visible but is not used to rewrite historical approval activity.
+- **Panel path:** [architecture and decisions](#design-choices-and-deliberate-tradeoffs), [validation](#validation), and the [product brief](docs/PRODUCT_BRIEF.md).
 
-The SBA source snapshot is as of 2026-06-30, so the nominal current window ends on that date. It must not be described as a July 2026-complete source.
-
-## Architecture and spatial choices
-
-The project is one TypeScript package: React/Vite renders the browser UI, Express exposes typed local APIs, and Node’s built-in SQLite stores a seeded snapshot. Source adapters normalize Chicago, NYC, and SBA rows into a common domain model. Pure date, change, and spatial functions support the server queries. Each API response carries the dataset identity and source-health metadata; record-detail endpoints preserve retained source fields and link back to the official publisher.
-
-Resolved permit coordinates are binned with H3 at resolution 8. This is a fixed visualization grain for the prototype, not a neighborhood, submarket, parcel, or statistical finding. An H3 cell provides a stable shared spatial bucket across both market adapters. The app distinguishes that grid assignment from coordinate precision: a `SOURCE_COORDINATE` means the publisher supplied coordinates, not that their location is survey-grade or exact. Records without usable coordinates remain in city totals and source accounting, while being excluded from the map. SBA rows intentionally have no point or H3 cell: mapping borrower-city or ZIP-level financing to a local permit cell would manufacture geographic precision.
-
-Snapshots live in SQLite so the demo is repeatable and evidence can be reviewed without a database service. It is an intentionally local, bounded choice; it is not a production concurrency or analytics architecture.
-
-## Run it
-
-Node **24.18.x** is the tested runtime (the package declares `>=24.18.0 <25`). On Windows PowerShell in this workspace, use `npm.cmd` because the `npm.ps1` shim may be blocked by execution policy. On macOS/Linux, replace `npm.cmd` with `npm`.
-
-```powershell
-npm.cmd ci
-npm.cmd run data:seed
-npm.cmd run dev
+```mermaid
+flowchart LR
+  A[Select a city and lens] --> B[Screen H3 permit activity]
+  B --> C[Open an Investigation Brief]
+  C --> D[Inspect source records, caveats, and next checks]
+  D --> E[Save a disposition]
+  E --> F[Export evidence for follow-up research]
+  G[Separate NYC context:<br/>ZAP / ACRIS] -. remains contextual .-> C
 ```
 
-Open the Vite URL printed by the command (normally `http://127.0.0.1:5173`). The submitted local snapshot is `public-full-5f0dea082481-91aa29bb1cde`: 63,482 Chicago records (62,750 mapped; 732 unmapped; 8,316 without a usable cost) and 334,974 NYC records (333,591 mapped; 1,383 unmapped). Both are `complete-query` extracts over the fixed windows, retrieved on 2026-09-19. The seed script uses those complete local raw snapshots when present; otherwise it seeds bundled deterministic public retained samples. The source-health panel tells you whether a source is `complete-query` or `partial`. For partial samples, growth ranking and percentages are disabled; sample counts must not be treated as market totals.
+## What is in the product
 
-### Full data and repository demo data
+| Capability | Delivered behavior | Boundary that protects interpretation |
+| --- | --- | --- |
+| Discovery | Fixed-window permit queue, exact types/work-intent lenses, H3 heatmap, and transparent ranking | No cross-city leaderboard or composite opportunity score |
+| Investigation | Counts, type mix, cadence, repeated supplied addresses, individual cost evidence, data quality, source links, and next checks | A pattern to investigate, never an outcome or causal conclusion |
+| Analyst workflow | Recent navigation, explicit saved Signal Inventory, dispositions/notes, JSON and HTML evidence exports | Browser-local prototype storage, not a shared CRM |
+| NYC property context | Exact DOB BBL join to retained PLUTO land-use categories | Parcel context is not tenancy or proof of permit purpose |
+| Additional context | Separate NYC ZAP entitlements, ACRIS exact-DEED evidence, and optional SBA 504 borrower-city context | These sources never change permit ranking or heatmap colors |
+| Data operations | Staged validation, snapshot identity, source-health reporting, idempotent refresh behavior | Local operations prototype; not a production admin system |
 
-The project deliberately supports both data modes so reviewers do not have to choose
-between reproducibility and a quick start:
+## Chicago and NYC use one workflow, not one meaning
 
-| Mode | Location | Included in GitHub? | Intended use |
-| --- | --- | --- | --- |
-| Complete downloaded snapshots | `data/raw/` | No; retained locally and reproducible with the fetch commands | Full-data verification and the interview author's local demo |
-| Retained permit demo | `data/demo/` | Yes | Immediate clean-checkout startup with public retained samples |
-| Small integration fixtures | `data/fixtures/` | Yes | Deterministic property-context, ZAP, ACRIS, and test behavior |
-| Generated SQLite database | `data/runtime/` | No; rebuilt by `data:seed` | Local application runtime |
+| Topic | Chicago | New York City |
+| --- | --- | --- |
+| Permit source | Chicago Building Permits | DOB NOW: Build Approved Permits |
+| Property context | Unavailable: no audited parcel-use join | Exact DOB BBL to retained PLUTO snapshot, with direct land-use categories |
+| Cost field | `reported_cost` | `estimated_job_costs` |
+| Separate context | Optional SBA borrower-city context | Optional SBA plus ZAP entitlements and bounded ACRIS recorded deeds |
+| Key limitation | Issuance record is not a project, start, or property-use proof | DOB NOW is not every NYC permit system; issuance record is not a project, start, or property-use proof |
 
-The exclusion of `data/raw/` is a packaging constraint, not missing implementation. The
-current full files include an approximately 183 MB NYC JSONL file, which exceeds GitHub's
-normal 100 MB per-file limit, plus approximately 34 MB of Chicago permits and 57 MB of SBA
-data. They remain in the local workspace and `.gitignore` prevents accidental publication.
-The fetch scripts, selected-field contracts, manifests, audits, and checksum verification
-are committed. A reviewer gets a working app from the tracked demo data; an evaluator who
-wants the complete public snapshot can run the documented fetch commands and reseed.
+The shared interface preserves source-specific adapters and wording. Cities are switched between, never ranked against one another. Chicago property context is visibly unavailable rather than inferred from text, cost, coordinates, or a nearest parcel.
 
-For the complete Chicago and NYC permit snapshot, a reviewer can run one command:
+## Data sources and semantics
+
+| Source | Used for | It cannot establish |
+| --- | --- | --- |
+| Chicago Building Permits | Issuance date, permit type, applicant estimate, supplied location | Unique development, start/completion, investment, demand, or property use |
+| NYC DOB NOW: Build | Approved/issued record, work type, estimate, supplied location and BBL | All NYC construction activity, unique development, outcome, or tenancy |
+| NYC PLUTO | Tax-lot land-use context and contracted parcel centroids | Historic use, current tenant, permit purpose, or survey-grade location |
+| NYC ZAP | Public entitlement applications and validated BBL associations | Approval, completion, or a causal connection to permits |
+| NYC ACRIS | Exact raw `DEED` documents and retained legal BBL associations | Staten Island coverage, sale price from `document_amt`, or redevelopment cause |
+| SBA 504 | Borrower-city loan-approval context when verified data is supplied | Project geography, disbursement, construction, or space demand |
+
+The comparison dates are fixed so that a review is reproducible:
+
+| Window | Inclusive start / exclusive end |
+| --- | --- |
+| Prior | 2024-07-01 to 2025-07-01 |
+| Current | 2025-07-01 to 2026-07-01 |
+
+<details>
+<summary><strong>Complete data, demo data, and refreshes</strong></summary>
+
+The tracked demo starts immediately from retained permit samples and small deterministic integration fixtures. It is suitable for inspecting the product flow, but partial samples disable growth percentages and growth ranking; sample counts are not market totals.
+
+For complete fixed-window Chicago and NYC permit extracts, run:
 
 ```powershell
 npm.cmd run data:setup:full
-```
-
-It downloads both fixed-window official permit extracts into `data/raw/`, validates their
-row counts and checksums, seeds the local database, and runs data verification. Existing
-valid files are replaced only after a complete staged download. This command requires
-network access, can download more than 200 MB, and may take several minutes. ZAP and ACRIS
-remain explicit optional refreshes (`data:fetch:zap` and `data:fetch:acris`) because they are
-separate evidence products rather than prerequisites for permit discovery. SBA acquisition
-is not included: the repository currently consumes a separately verified SBA CSV when it is
-present in `data/raw/`; the clean checkout uses an empty optional SBA demo input and clearly
-shows that SBA context is unavailable.
-
-Exceptions: the bundled NYC property-use, ZAP, and ACRIS files are deliberately small
-integration fixtures, not complete live extracts. Their pages and exports label this
-boundary. Live ZAP/ACRIS acquisition is implemented separately, while a production-scale
-PLUTO property-context refresh remains future work.
-
-For a built local demo:
-
-```powershell
 npm.cmd run demo
 ```
 
-Useful data commands are `data:setup:full`, `data:fetch:permits`, `data:fetch:chicago`, `data:fetch:nyc`, `data:fetch:zap`, `data:fetch:acris`, `data:bundle-demo`, `data:seed`, and `data:verify`. Permit fetches query the fixed windows, freeze selected source fields, and reconcile source counts before keeping a snapshot. The ZAP fetch polls official NYC metadata, pages Project Data and BBL associations, fetches only referenced PLUTO parcels, and preserves retained snapshots for cautious change detection. The verified SBA CSV may be supplied under `data/raw/` and is then ingested as borrower-city context; the current `data:fetch:sba` placeholder deliberately exits rather than downloading an unaudited file.
+This downloads more than 200 MB, stages and reconciles the official extracts, seeds SQLite, and verifies the result. `data/raw/` is intentionally not committed because the current local source files exceed normal repository-size limits. ZAP and ACRIS refresh independently via `npm.cmd run data:fetch:zap` and `npm.cmd run data:fetch:acris`. SBA ingestion requires a separately verified local CSV; the demo discloses when that context is unavailable.
 
-## Validation status
+Source notes and audits: [research index](docs/RESEARCH.md), [NYC property context](docs/NYC_PROPERTY_USE_AUDIT.md), [Chicago property context](docs/CHICAGO_PROPERTY_USE_AUDIT.md), [ACRIS](docs/TRANSACTION_SOURCE_AUDIT.md), and [SBA](docs/SBA_STATUS.md).
+</details>
 
-All submission checks passed against the corrected full-public dataset:
+## Design choices and deliberate tradeoffs
+
+This section is written for reviewers who want the reasoning behind the visible product.
+
+<details open>
+<summary><strong>Use an investigation queue instead of a generic dashboard</strong></summary>
+
+The product starts from a bounded analyst decision: choose a few areas for the next research step and preserve why. That led to fixed windows, an explainable queue, an Investigation Brief, explicit dispositions, and exportable evidence. The map is geographic context; it does not make an opportunity claim.
+
+No user interviews, adoption study, time-savings measurement, predictive validation, or willingness-to-pay research was completed. The user and value proposition are hypotheses to test with working analysts.
+</details>
+
+<details>
+<summary><strong>Use two concrete source adapters before claiming a reusable pattern</strong></summary>
+
+Chicago and NYC expose differences in identity, categories, coverage, coordinates, and parcel association. Separate adapters normalize only the stable shared concepts while preserving retained source fields and official links. This gives one investigation workflow without implying the cities or their event semantics are equivalent.
+</details>
+
+<details>
+<summary><strong>Use H3 as a display bucket, with explicit precision limits</strong></summary>
+
+Resolution-8 H3 gives a repeatable screenable grid across both markets. It is not a neighborhood, submarket, parcel, or property footprint. Records without usable coordinates remain in city totals and source accounting but do not receive an invented map location. Source coordinates and PLUTO parcel centroids remain visibly distinct; SBA borrower-city records are not forced into a cell.
+</details>
+
+<details>
+<summary><strong>Prefer transparent rules over an AI or blended opportunity score</strong></summary>
+
+There is no labeled outcome, calibrated model, or validated causal target. Combining permits, entitlements, deeds, borrower geography, and incomplete applicant estimates into one score would conceal incompatible dates, meanings, and geographic precision. The product keeps those evidence families separate and gives the analyst reviewable counts, mappings, caveats, and next checks.
+</details>
+
+<details>
+<summary><strong>Choose a local TypeScript and SQLite vertical slice</strong></summary>
+
+React/Vite renders the interface; typed Express APIs query a seeded SQLite snapshot; Node ingestion scripts and source adapters build the data. One repository makes it possible to trace a source field through normalization, API response, UI disclosure, export, and test. SQLite provides a portable, reproducible review snapshot without a hosted dependency. This is appropriate for a single-user take-home demonstration, not a production concurrency or analytics architecture.
+</details>
+
+<details>
+<summary><strong>Treat refresh as a data product</strong></summary>
+
+Acquisition freezes selected fields for the fixed period, checks source counts and identities, records checksums/manifests, and only activates a rebuilt snapshot after validation. Unchanged publisher versions can return `UP_TO_DATE`; failed staged work keeps the active verified dataset. The UI exposes dataset identity and source health so coverage can be assessed before a pattern is interpreted.
+</details>
+
+## Impediments and how the product addresses them
+
+| Impediment | Response |
+| --- | --- |
+| Permit records are events, not projects | The UI names them permit activity and directs the analyst to reconcile related records before treating a pattern as a lead. |
+| Sources have unequal coverage and field semantics | Two adapters retain source identity; source-health panels and contextual caveats stay attached to results. |
+| Property use cannot safely be inferred everywhere | NYC uses only an exact BBL-to-PLUTO association; Chicago does not offer a guessed equivalent. |
+| Applicant estimates can mislead when aggregated | The product filters and ranks by individual values but never sums them into investment. Missing is not zero. |
+| More evidence can create a false composite signal | ZAP, ACRIS, and SBA stay as separate context and never alter permit discovery ranking. |
+| Public data changes and downloads can fail | Staged snapshots, validation, checksums, idempotent refreshes, and explicit partial-data behavior protect the active demo. |
+
+## Validation
+
+The release verification covered data semantics as well as interface behavior:
 
 ```powershell
 npm.cmd run data:seed
@@ -137,14 +161,43 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-The seed reports balance for every source. `data:verify` passed its accounting, date bounds, mapped/unmapped evidence, and raw-file checksum checks. TypeScript and the production build passed. Vitest passed all 63 tests across 16 files, including the unfiltered-window cache boundary, property-use classification/API/state contracts, ACRIS and ZAP safeguards, qualified-signal boundaries, refresh idempotence, investigation briefs, and normalization. The full serial Playwright suite passed all 13 workflows from a fresh built server in 49.1 seconds; the focused property-context screenshot was visually inspected. The initial NYC summary/cells/sources request batch measured 0.78 seconds after the final rebuild.
+The recorded release result was 63 Vitest unit/integration tests across 16 files and 13 serial Playwright workflows from a fresh built server. Tests cover normalization, date boundaries, identity/accounting, zero baselines, property context, cost handling, refresh idempotence, ZAP/ACRIS safeguards, URL restoration, H3 refinement, and saved-lead behavior. See the [handbook verification section](docs/HANDBOOK.md#verification) for the review summary.
 
-## Sources and further reading
+## Limitations, completed scope, and next work
 
-The verified source notes, field semantics, and retrieval caveats are in [docs/RESEARCH.md](docs/RESEARCH.md); the SBA field audit and exact borrower-city policy are in [docs/SBA_STATUS.md](docs/SBA_STATUS.md). [docs/DECISIONS.md](docs/DECISIONS.md) records the boundaries that keep the prototype from overstating what its data can support. [docs/DEMO.md](docs/DEMO.md) is a three-minute walkthrough, and [docs/SUBMISSION.md](docs/SUBMISSION.md) is the final sharing and recording checklist.
+<details open>
+<summary><strong>Limitations to keep in view</strong></summary>
 
-## Product positioning
+- Permit activity does not prove a project, construction start/completion, demand, valuation, or commercial relevance.
+- Both permit sources contain mixed activity. NYC property context is limited to a retained snapshot and exact BBL association; Chicago has no equivalent in this release.
+- H3 is a screening grid, and map placement inherits the available source or contracted centroid precision.
+- Applicant cost fields are incomplete row-level estimates, never area investment totals.
+- The bundled ZAP and ACRIS data proves integration behavior, not live or complete coverage. ACRIS is bounded to four boroughs and `document_amt` is not a sale price.
+- Saved work is browser-local and the local operations controls do not implement production authentication, roles, monitoring, or retention policies.
+</details>
 
-This is not a claim that public permit counts predict CRE outcomes. Government portals can and should remain the authoritative publisher and source-specific explorer. CRE Activity Radar is a product hypothesis about a different job: help a market research analyst form and validate a small weekly investigation queue across heterogeneous public systems.
+<details>
+<summary><strong>Completed in this prototype</strong></summary>
 
-Its differentiation is the evidence-continuous workflow: fixed comparison windows, transparent prioritization, source-specific semantics, quality and provenance context, explainable diagnostics, and next checks. It uses no exclusive data and has no demonstrated durable moat, user adoption, willingness to pay, time savings, or predictive accuracy. [docs/PRODUCT_BRIEF.md](docs/PRODUCT_BRIEF.md) gives interview-ready answers on differentiation, H3, two-city scope, buyers, limits, and how value should be validated.
+Two-market permit discovery; explainable H3 research; NYC property context; individual-estimate controls; saved leads and exports; separate ZAP/ACRIS context; guarded data operations; full-data permit bootstrap; automated tests; interview materials; and a repeatable narrated-video build.
+</details>
+
+<details>
+<summary><strong>Next work, in order</strong></summary>
+
+1. Observe working analysts preparing recurring reviews and test whether the brief improves the next research decision.
+2. Add production authentication, orchestration, monitoring, retention policy, and source-service objectives before treating operations as a service.
+3. Build a production-scale PLUTO refresh and audit a Chicago parcel/PIN association before adding Chicago property-use or transaction placement.
+4. Evaluate licenses, certificates of occupancy, and violations as separate verified source contracts rather than adding more map layers by default.
+</details>
+
+## AI-assisted development disclosure
+
+AI tools assisted with ideation, implementation acceleration, test and documentation drafting, and review of the local prototype. Product boundaries, data semantics, source contracts, tradeoffs, and final verification were deliberately reviewed against the actual code and retained source materials. The product makes no claim that an AI model determines the investigation queue or validates the analyst's conclusion.
+
+## Further reading
+
+- [Product handbook](docs/HANDBOOK.md) — detailed workflows, source inventory, corner cases, and operations.
+- [Product brief and FAQ](docs/PRODUCT_BRIEF.md) — product positioning and interview-ready answers.
+- [Demo script](docs/DEMO.md) — concise product walkthrough.
+- [Architecture and product decisions](docs/DECISIONS.md) and [research/source notes](docs/RESEARCH.md).

@@ -15,8 +15,8 @@ and links to deeper material only when needed.
 | Operate or refresh the data | [Data operations](#data-operations) |
 | Review architecture and tradeoffs | [Engineering decisions](#engineering-decisions) |
 | Understand tests and release status | [Verification](#verification) |
-| Prepare for the interview | [INTERVIEW_PREP.md](INTERVIEW_PREP.md) |
-| Record or submit the demo | [SUBMISSION.md](SUBMISSION.md) |
+| Understand positioning and hard questions | [PRODUCT_BRIEF.md](PRODUCT_BRIEF.md) |
+| Follow the concise product walkthrough | [DEMO.md](DEMO.md) |
 
 ## What is this?
 
@@ -244,8 +244,7 @@ violations only through separate verified source contracts.
 
 - [Three-minute demo](DEMO.md)
 - [Narrated case-study storyboard](NARRATED_DEMO.md)
-- [Interview preparation](INTERVIEW_PREP.md)
+- [Product positioning and hard questions](PRODUCT_BRIEF.md)
 - [Product brief and FAQ](PRODUCT_BRIEF.md)
 - [Task-oriented manual](MANUAL.md)
 - [Architecture and product decisions](DECISIONS.md)
-- [Submission checklist](SUBMISSION.md)

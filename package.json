@@ -27,6 +27,7 @@
     "test": "vitest run --exclude tests/e2e/**",
     "test:e2e": "playwright test",
     "demo:record": "node scripts/record-demo.mjs",
+    "demo:record:interview": "node scripts/record-interview-demo.mjs",
     "demo": "npm run data:seed && npm run build && npm run start"
   },
   "dependencies": {

@@ -6,4 +6,8 @@ test-results/
 playwright-report/
 submission/*.webm
 submission/*.mp4
+submission/.recording-work/
+submission/qa*/**
+submission/case-study-qa/**
+.publish/
 .env
